@@ -280,7 +280,17 @@ fx say_hi() {
 
 ...
 
-## Error Handling (Exceptions)
+## Error Handling (Exceptions)  
+Errors or bugs in the program cause exceptions, that can be handled by using the ```try-catch-throw``` blocks.  
+```
+try this() {
+	success_statement;
+} catch {
+	catch_statement;
+}
+
+fx this() { throw “something wrong”; }
+```
 
 ## Modules
 
