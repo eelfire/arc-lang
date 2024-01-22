@@ -85,9 +85,9 @@ impl      // Denote user defined implementations (similar to methods) for types 
 self      // Denote current instance of a type or struct
 true      // Boolean type true 
 false     // Boolean type false
-try       // Exception handling
-catch     // "        "
-throw     // "                 "
+result    // Keyword for error handling
+ok        // Keyword for error handling in case of success
+err       // Keyword for error handling in case of error
 ```
 
 ## Operators
@@ -193,25 +193,50 @@ A *string* type is a set of string values (a sequence of characters). Length of 
 
 A *string slice* type is a subsequence of characters derived from an existing string value.
 
-`string`
+```rs
+let s: string = "Hello, World!";
+let s_slice: string = s[3:5]; // "lo"
+let inferred_s_type = "Hello, World!"; // inferred as string
+
+let s_len = s.len(); // length of string, impl can be used to define len() for types [similar to methods]
+let big_s = s + " How are you?"; // concatenation
+```
 
 ### Array types
 
-A fixed size collection of objects of same type
+A fixed size collection of objects of same type. `[]` is used to declare array.
 
-`[]`
+```rs
+let arr: [u32; 3] = [1, 2, 3];
+let inferred_arr_type = [1, 2, 4, 6]; // inferred as [i32; 4]
+
+let x = arr[0]; // accessing array elements
+let a_slice = arr[0:3] // slicing array, elements [0, 3)
+```
 
 ### Tuple types
 
-A fixed size collection of literals of different types
+A fixed size collection of literals of different types. Tuple contains elements of different types. `()` is used to declare tuple.
 
-`()`
+```rs
+let tup: (i32, u64, u32) = (-5, 67, 13);
+let inferred_tup_type = (-5, 67, 13); // inferred as (i32, i32, i32)
+
+let (x, y, z) = tup; // destructuring
+let x = tup.0; // accessing tuple elements
+```
 
 ### List types
 
-A variable size array
+A dynamic size array. List contains elements of same type. `![]` is used to declare list.
 
-`![]`
+```rs
+let a_list: [u32] = ![1, 2, 3];
+
+let x = a_list[0]; // accessing list elements
+let a_slice = a_list[0:3] // slicing list, elements [0, 3)
+a_list.push(4); // push element to list, demonstrates the dynamic size
+```
 
 ### Syntax for type declaration
 
@@ -228,7 +253,7 @@ StatementList = { Statement ";" } .
 
 A block can also return a final value using the `return` keyword.
 
-```
+```rs
 {
     statement1;
     statement2;
@@ -240,7 +265,7 @@ Variables defined inside a block statment are scoped to itself and cannot be acc
 
 ## Flow Control
 
-```
+```rs
 for variable in range_expression {}
 
 while condition {}
@@ -259,7 +284,7 @@ match variable {
 
 Examples:
 
-```
+```rs
 for line in lines {
     print(line);
 }
@@ -276,7 +301,7 @@ match
 
 ## Functions
 
-```
+```rs
 fx function_name(a type, b type) ~ type {
     statement1;
     statement2;
@@ -289,7 +314,7 @@ Use of `fx` for defining the function. Function name is identifier.
 
 Examples:
 
-```
+```rs
 fx add_u32s(a u32, b u32) ~ u32 {
     return a + b;
 }
@@ -301,27 +326,41 @@ fx say_hi() {
 
 ## Closures
 
-...
+`fx() {}` can be used to define closures. Closures are anonymous functions. Closures can be assigned to variables. Closures can be passed as arguments to other functions. Closures can capture variables from the enclosing scope. Last expression in the closure is returned without explicit mention of return keyword.
+
+```rs
+let add = fx(a, b) { a + b };
+let multiply = fx(x, y) {
+    let result = x * y;
+    result
+};
+```
 
 ## Error Handling (Exceptions)  
 
-Errors or bugs in the program cause exceptions, that can be handled by using the ```try-catch-throw``` blocks.  
+Errors in the program cause exceptions, that can be handled by using the `Result<success_type, error>`. Furthermore, `ok` and `err` can be used to return the success and error values respectively. `if let` syntax is used to destructure the result.
 
-```
-try this() {
-    success_statement;
-} catch {
-    catch_statement;
+```rs
+let res = fx() ~ result<u32, string> {
+    if condition {
+        return ok(1);
+    } else {
+        return err("Error message");
+    }
 }
 
-fx this() { throw “something wrong”; }
+if let ok(value) = res {
+    print("Value: {}", value);
+} else {
+    print("Error: {}", res.err());
+}
 ```
 
 ## Modules
 
 Filename is automatically considered as module name. Filename can be used for imports. Child modules can be defined.
 
-```
+```rs
 mod module_name {
     fx a_function() {
         statement1;
@@ -345,7 +384,7 @@ mod module_name {
 
 `main` is entry point for the arc lang.
 
-```
+```rs
 fx main() {
     statement1;
     statement2;
@@ -357,7 +396,7 @@ fx main() {
 
 `import` keyword is used for importing from another module. `*` can be used to import everything public from the module. `super` keyword is used to access parent module.
 
-```
+```python
 import module::function_name;
 import super::this_function;
 import another_module::*;
@@ -375,7 +414,7 @@ function
 type
 ```
 
-```
+```rs
 pub fx public(a i32) ~ i32 {
     statement;
     return expr;
@@ -389,9 +428,9 @@ fx private(b u64) ~ bool { // this function is private
 
 ## Other
 
-`struct`, `enum`, `impl` can be introduced to arc lang if time permits.
+`struct`, `enum`, `impl`.
 
-```
+```rs
 struct StructName {
     field1: u32,
     field2: u32,
