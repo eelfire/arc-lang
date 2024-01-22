@@ -4,10 +4,11 @@
 
 ## Introduction
 
-This is initial specifications sheet for Arc. The specification may change as the language evolves.
-  
-Arc stands for **A**nother **R**ust base **C**ompiler. Arc is an experimental programming language, tuned for compilation to [WASM](https://webassembly.org/). It is fast and light. Arc is statically typed language. The remainder of this spec-sheet will take you through the various specifications of the language.  
+This is an initial specifications sheet for Arc. It may change as the language evolves.
 
+Arc stands for **A**nother **R**ust based **C**ompiler. Arc is an _experimental_ programming language, tuned for compilation to [WASM](https://webassembly.org/). It is fast and light. It is a statically typed language. The remainder of this document will take you through the various specifications of the language.
+
+- Productions are formed by combining terms and the operators listed below, with each operator having a higher precedence than the one that follows it.
 - All productions mentioned here are in modified EBNF (Extended Backus-Naur Form).
 
 ```go
@@ -64,30 +65,30 @@ _compilers
 ## Keywords
 
 ```
-let       // Used to declare variable
-mut       // Used to declare mutability of variable
-type      // Used to declare type
-fx        // Used to declare function
-main      // Used to define the start of execution (entry point) of a program
-return    // Used to return a value from a function to the caller
-while     // Keyword for 'while' loop
-for       // Keyword for 'for' loop
-continue  // Used to stop an iteration and continue with the next in a loop block
-break     // Used to abruptly jump out of the loop block
-in        // Keyword to represent membership in arrays, lists, tuplesa and iterators
-import    // Import built-in and user defined packages
-pub       // public
-mod       // 
-super     // 
-struct    // Denote user defined structures
-enum      // Denote user defined enumerations
-impl      // Denote user defined implementations (similar to methods) for types and structs
-self      // Denote current instance of a type or struct
-true      // Boolean type true 
-false     // Boolean type false
-try       // Exception handling
-catch     // "        "
-throw     // "                 "
+let      // Used to declare variables
+mut      // Used to declare mutable types
+type     // Used to declare type of variable
+fx       // Used to functions
+main     // Used to define the start of execution of a program
+return   // Ued to return a value from a function to the caller
+while    // Keyword for 'while' loop
+for      // Keyword for 'for' loop
+continue // Used to stop an iteration and continue with the next in a loop block
+break    // Used to abruptly jump out of the loop block
+in       // Keyword to represent membership in arrays, lists and tuples
+import   // Import built-in anduser defined packages
+pub      // public
+mod      //
+super    //
+self
+struct   // denote user defined structures
+enum
+impl
+true	 // Boolean true
+false  	 // Boolean false
+try  	 // Exception handling
+catch    // "		      "
+throw    // "                 "
 ```
 
 ## Operators
@@ -150,7 +151,7 @@ string_lit = `"` { unicode_value } `"` .
 
 ## Variables
 
-All variables are *immutable* by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.
+All variables are _immutable_ by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.
 
 ```rs
 let x = 23;
@@ -172,7 +173,7 @@ let y: bool = false;
 
 ### Numeric types
 
-An *integer* type, and *floating-point* type represent the set of integer and floating-point values respectively. These are collectively called as *numeric* types.
+An _integer_ type, and _floating-point_ type represent the set of integer and floating-point values respectively. These are collectively called as _numeric_ types.
 
 ```
 u32   the set of all unsigned 32-bit integers (0 to 4294967295)
@@ -189,9 +190,9 @@ char  alias for u32
 
 ### String types
 
-A *string* type is a set of string values (a sequence of characters). Length of string is otherwise the number of characters present in it which is non negative.
+A _string_ type is a set of string values (a sequence of characters). Length of string is otherwise the number of characters present in it which is non negative.
 
-A *string slice* type is a subsequence of characters derived from an existing string value.
+A _string slice_ type is a subsequence of characters derived from an existing string value.
 
 `string`
 
@@ -303,9 +304,9 @@ fx say_hi() {
 
 ...
 
-## Error Handling (Exceptions)  
+## Error Handling (Exceptions)
 
-Errors or bugs in the program cause exceptions, that can be handled by using the ```try-catch-throw``` blocks.  
+Errors or bugs in the program cause exceptions, that can be handled by using the `try-catch-throw` blocks.
 
 ```
 try this() {
