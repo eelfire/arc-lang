@@ -58,27 +58,30 @@ GRADE_11
 ## Keywords
 
 ```
-let
-mut
-type
-fx
-main
-return
-while
-for
-continue
-break
-in
-import
-pub
-mod
-super
+let      // Used to declare variables
+mut      // Used to declare mutable types     
+type     // Used to declare type of variable
+fx       // Used to functions
+main     // Used to define the start of execution of a program
+return   // Ued to return a value from a function to the caller
+while    // Keyword for 'while' loop
+for      // Keyword for 'for' loop
+continue // Used to stop an iteration and continue with the next in a loop block
+break    // Used to abruptly jump out of the loop block
+in       // Keyword to represent membership in arrays, lists and tuples
+import   // Import built-in anduser defined packages
+pub      // public
+mod      // 
+super    //
 self
-struct
+struct   // denote user defined structures
 enum
 impl
 true
-false
+false  
+try  
+catch  
+throw  
 ```
 
 ## Operators
