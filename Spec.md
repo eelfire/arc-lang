@@ -8,10 +8,9 @@ This is an initial specifications sheet for Arc. It may change as the language e
 
 Arc stands for **A**nother **R**ust based **C**ompiler. Arc is an _experimental_ programming language, tuned for compilation to [WASM](https://webassembly.org/). It is fast and light. It is a statically typed language. The remainder of this document will take you through the various specifications of the language.
 
-- Productions are formed by combining terms and the operators listed below, with each operator having a higher precedence than the one that follows it.
-- All productions mentioned here are in modified EBNF (Extended Backus-Naur Form).
+- Productions are formed by combining terms and the operators listed below, with each operator having a higher precedence than the one that follows it. All productions mentioned in this document follow a variant of EBNF (Extended Backus-Naur Form).
 
-```go
+```rs
 |   alternation
 ()  grouping
 []  option (0 or 1 times)
@@ -20,11 +19,11 @@ Arc stands for **A**nother **R**ust based **C**ompiler. Arc is an _experimental_
 
 ## Source Code Representation
 
-Only `UTF-8` encoding file with `.arc` extension is supported.
+The compiler only supports files that have the `.arc` extension and are encoded in `UTF-8`.
 
 #### Character Sets
 
-```go
+```rs
 letter        = <all unicode letters> | "_" .
 decimal_digit = "0" … "9" .
 binary_digit  = "0" | "1" .
@@ -36,7 +35,7 @@ hex_digit     = "0" … "9" | "A" … "F" | "a" … "f" .
 
 ### Comments
 
-Useful for documenting the program. Any of these forms can be used:
+Useful for documenting any program. Any of these forms can be used:
 
 1. Line comments are initiated by the `//` sequence and extend until the end of the line.
 2. General comments are initiated by the `/*` sequence and conclude with the first occurrence of the `*/` sequence.
@@ -45,21 +44,21 @@ A general comment that doesn't include line breaks behaves as a space. Any other
 
 ### Semicolons
 
-`;`: These will be used as terminators for all statements and \_\_\_.
+`;` will be used as terminators for all statements and indicate the end of a line or instruction, allowing for multiple statements on a single line if desired.
 
 ## Identifiers
 
-Used for naming variables and types. First character must be a letter.
+They serve as names for variables and types and must being with a letter.
 
-```go
+```rs
 identifier = letter { letter | unicode_digit } .
 ```
 
 ```
 x
+_compilers
 cs_327
 GRADE_11
-_compilers
 ```
 
 ## Keywords
@@ -91,21 +90,45 @@ catch    // "		      "
 throw    // "                 "
 ```
 
-## Operators
+## Operators and punctuations
 
-Following are the set of supported operator (including assignment operators)
+Following are the sets of supported operators (unary and binary).
 
-```
+```go
 Arithmetic Operators
++    -    *    /    %   **
+++    --
 ```
 
 ```go
-+    &     +=    &=     &&    ==    !=    (    )
--    |     -=    |=     ||    <     <=    [    ]
-*    ^     *=    ^=     <-    >     >=    {    }
-/    <<    /=    <<=    ++    =     :=    ,    ;
-%    >>    %=    >>=    --    !     ...   .    :
-**   &^          &^=          ~
+Logical Operators
+&&    ||    !
+```
+
+```go
+Comparison Operators
+==    !=    <    >    >=    <=
+```
+
+```go
+Assignment Operators
+=     :=     +=    -=    *=
+/=    %=     &=    |=    ^=
+<<=   >>=
+```
+
+```go
+Bitwise Operators
+~    &    |    ^    <<    >>
+```
+
+```go
+Punctuations
+(    )
+[    ]
+{    }
+,    ;
+.    :
 ```
 
 ## Integer Literals
