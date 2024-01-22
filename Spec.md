@@ -1,4 +1,5 @@
 # The Arc Programming Language Specification
+##### Last updated: Jan 22, 2024  
 
 ## Introduction
 
@@ -72,11 +73,12 @@ import
 pub
 mod
 super
-
 self
 struct
 enum
 impl
+true
+false
 ```
 
 ## Operators
@@ -131,7 +133,7 @@ string_lit = `"` { unicode_value } `"` .
 
 ## Variables
 
-All are immutable by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.
+All variables are *immutable* by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.
 
 ```rs
 let x = 23;
