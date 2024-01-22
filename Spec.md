@@ -77,13 +77,13 @@ break     // Used to abruptly jump out of the loop block
 in        // Keyword to represent membership in arrays, lists, tuplesa and iterators
 import    // Import built-in and user defined packages
 pub       // public
-mod       // 
-super     // 
+mod       //
+super     //
 struct    // Denote user defined structures
 enum      // Denote user defined enumerations
 impl      // Denote user defined implementations (similar to methods) for types and structs
 self      // Denote current instance of a type or struct
-true      // Boolean type true 
+true      // Boolean type true
 false     // Boolean type false
 result    // Keyword for error handling
 ok        // Keyword for error handling in case of success
@@ -179,8 +179,8 @@ All variables are _immutable_ by default and mutability for a variable can be ad
 ```rs
 let x = 23;
 let mut z = 469;
-let m;      // illegal: a type must be defined for uninitialised variables
 let weather: string = "cold";
+let m;      // illegal: a type must be defined for uninitialised variables
 ```
 
 ## Types
@@ -266,6 +266,7 @@ a_list.push(4); // push element to list, demonstrates the dynamic size
 
 ```rs
 type t := i32 | i64 | f32 | f64
+type s := (u32, f32)
 ```
 
 ## Blocks & Scope
@@ -304,7 +305,7 @@ match variable {
 }
 ```
 
-`if-else if-else` and `match` conditionals can have return value.
+`if - else if - else` and `match` conditionals can have return value.
 
 Examples:
 
@@ -315,12 +316,23 @@ for line in lines {
 
 while x > 0 {
     print("x: {}", x);
-    x = x - 1;
+    x--;
 }
 
-if
+if isSunny {
+    print("It's a sunny day!");
+} else if isRaining {
+    print("It's raining outside.");
+} else {
+    print("The weather is unknown.");
+}
 
-match
+match grade {
+    'A' => "Excellent!",
+    'B' => "Good job!",
+    'C' => "Satisfactory.",
+    _   => "Needs improvement.",
+}
 ```
 
 ## Functions
