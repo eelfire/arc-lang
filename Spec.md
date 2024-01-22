@@ -2,6 +2,9 @@
 ##### Last updated: Jan 22, 2024  
 
 ## Introduction
+This is specifications sheet for Arc1.0 version.  
+  
+Arc stands for **A**nother **R**ust base **C**ompiler. Arc is an experimental programming language, tuned for compilation to [WASM](https://webassembly.org/). It is fast and light. The remainder of this spec-sjeet will take you through the various specifications of the language.  
 
 - all productions mentioned here are in modified EBNF (Extended Backus-Naur Form)
 
