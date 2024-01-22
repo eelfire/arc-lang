@@ -4,13 +4,13 @@
 
 ## Introduction
 
-This is initial specifications sheet for Arc. The specification may change as the language evolves.
-  
-Arc stands for **A**nother **R**ust base **C**ompiler. Arc is an experimental programming language, tuned for compilation to [WASM](https://webassembly.org/). It is fast and light. Arc is statically typed language. The remainder of this spec-sheet will take you through the various specifications of the language.  
+This is an initial specifications sheet for Arc. It may change as the language evolves.
 
-- All productions mentioned here are in modified EBNF (Extended Backus-Naur Form).
+Arc stands for **A**nother **R**ust based **C**ompiler. Arc is an _experimental_ programming language, tuned for compilation to [WASM](https://webassembly.org/). It is fast and light. It is a statically typed language. The remainder of this document will take you through the various specifications of the language.
 
-```go
+- Productions are formed by combining terms and the operators listed below, with each operator having a higher precedence than the one that follows it. All productions mentioned in this document follow a variant of EBNF (Extended Backus-Naur Form).
+
+```rs
 |   alternation
 ()  grouping
 []  option (0 or 1 times)
@@ -19,11 +19,11 @@ Arc stands for **A**nother **R**ust base **C**ompiler. Arc is an experimental pr
 
 ## Source Code Representation
 
-Only `UTF-8` encoding file with `.arc` extension is supported.
+The compiler only supports files that have the `.arc` extension and are encoded in `UTF-8`.
 
 #### Character Sets
 
-```go
+```rs
 letter        = <all unicode letters> | "_" .
 decimal_digit = "0" … "9" .
 binary_digit  = "0" | "1" .
@@ -35,7 +35,7 @@ hex_digit     = "0" … "9" | "A" … "F" | "a" … "f" .
 
 ### Comments
 
-Useful for documenting the program. Any of these forms can be used:
+Useful for documenting any program. Any of these forms can be used:
 
 1. Line comments are initiated by the `//` sequence and extend until the end of the line.
 2. General comments are initiated by the `/*` sequence and conclude with the first occurrence of the `*/` sequence.
@@ -44,21 +44,21 @@ A general comment that doesn't include line breaks behaves as a space. Any other
 
 ### Semicolons
 
-`;`: These will be used as terminators for all statements and \_\_\_.
+`;` will be used as terminators for all statements and indicate the end of a line or instruction, allowing for multiple statements on a single line if desired.
 
 ## Identifiers
 
-Used for naming variables and types. First character must be a letter.
+They serve as names for variables and types and must being with a letter.
 
-```go
+```rs
 identifier = letter { letter | unicode_digit } .
 ```
 
 ```
 x
+_compilers
 cs_327
 GRADE_11
-_compilers
 ```
 
 ## Keywords
@@ -90,21 +90,45 @@ ok        // Keyword for error handling in case of success
 err       // Keyword for error handling in case of error
 ```
 
-## Operators
+## Operators and punctuations
 
-Following are the set of supported operator (including assignment operators)
+Following are the sets of supported operators (unary and binary).
 
-```
+```go
 Arithmetic Operators
++    -    *    /    %   **
+++    --
 ```
 
 ```go
-+    &     +=    &=     &&    ==    !=    (    )
--    |     -=    |=     ||    <     <=    [    ]
-*    ^     *=    ^=     <-    >     >=    {    }
-/    <<    /=    <<=    ++    =     :=    ,    ;
-%    >>    %=    >>=    --    !     ...   .    :
-**   &^          &^=          ~
+Logical Operators
+&&    ||    !
+```
+
+```go
+Comparison Operators
+==    !=    <    >    >=    <=
+```
+
+```go
+Assignment Operators
+=     :=     +=    -=    *=
+/=    %=     &=    |=    ^=
+<<=   >>=
+```
+
+```go
+Bitwise Operators
+~    &    |    ^    <<    >>
+```
+
+```go
+Punctuations
+(    )
+[    ]
+{    }
+,    ;
+.    :
 ```
 
 ## Integer Literals
@@ -150,7 +174,7 @@ string_lit = `"` { unicode_value } `"` .
 
 ## Variables
 
-All variables are *immutable* by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.
+All variables are _immutable_ by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.
 
 ```rs
 let x = 23;
@@ -172,7 +196,7 @@ let y: bool = false;
 
 ### Numeric types
 
-An *integer* type, and *floating-point* type represent the set of integer and floating-point values respectively. These are collectively called as *numeric* types.
+An _integer_ type, and _floating-point_ type represent the set of integer and floating-point values respectively. These are collectively called as _numeric_ types.
 
 ```
 u32   the set of all unsigned 32-bit integers (0 to 4294967295)
@@ -189,9 +213,9 @@ char  alias for u32
 
 ### String types
 
-A *string* type is a set of string values (a sequence of characters). Length of string is otherwise the number of characters present in it which is non negative.
+A _string_ type is a set of string values (a sequence of characters). Length of string is otherwise the number of characters present in it which is non negative.
 
-A *string slice* type is a subsequence of characters derived from an existing string value.
+A _string slice_ type is a subsequence of characters derived from an existing string value.
 
 ```rs
 let s: string = "Hello, World!";
@@ -336,7 +360,7 @@ let multiply = fx(x, y) {
 };
 ```
 
-## Error Handling (Exceptions)  
+## Error Handling (Exceptions)
 
 Errors in the program cause exceptions, that can be handled by using the `Result<success_type, error>`. Furthermore, `ok` and `err` can be used to return the success and error values respectively. `if let` syntax is used to destructure the result.
 
