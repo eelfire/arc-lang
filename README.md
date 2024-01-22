@@ -3,11 +3,11 @@
 </p>
 <h1 align="center">The ARC Programming Language</h1>
 
-## This is the main source code repository for Arc. This repository is built as a submisson for the corse CS 327 at IITGN.  
+## This is the main source code repository for Arc. This repository is built as a submisson for the course CS 327 at IITGN.  
 
 ### Contributors
-- Mithil Pechimutu -> pechimuthumithil@iitgn.ac.in
-- Naman Dharmani] -> dharmaninaman@iitgn.ac.in
+- Mithil Pechimuthu -> pechimuthumithil@iitgn.ac.in
+- Naman Dharmani -> dharmaninaman@iitgn.ac.in
 - Tirth Patel -> pateltirth@iitgn.ac.in  
 
 ### Assignment 1
