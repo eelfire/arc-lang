@@ -77,11 +77,11 @@ self
 struct   // denote user defined structures
 enum
 impl
-true
-false  
-try  
-catch  
-throw  
+true	 // Boolean true 
+false  	 // Boolean false
+try  	 // Exception handling
+catch    // "		      "
+throw    // "                 "
 ```
 
 ## Operators
@@ -171,7 +171,7 @@ char  alias for u32
 
 A _string_ type is a set of string values (a sequence of characters). Length of string is otherwise the number of characters present in it which is non negative.
 
-A _string slice_ type is a subset of characters derived from an existing string value.
+A _string slice_ type is a subsequence of characters derived from an existing string value.
 
 `string`
 
