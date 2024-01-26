@@ -2,6 +2,6 @@ pub mod lexer;
 pub mod token;
 
 fn main() {
-    println!("Hello, world!");
+    println!("Hello from simple arc-lang compiler!");
     lexer::run();
 }
