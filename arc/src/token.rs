@@ -46,20 +46,13 @@ pub enum Token {
     Star,
     Slash,
     Percent,
-    DoubleStar,
+    UnaryPlus,
+    UnaryMinus,
 
     // logical operators
     LogicalAnd,
     LogicalOr,
     LogicalNot,
-
-    // bitwise operators
-    BitwiseAnd,
-    BitwiseOr,
-    BitwiseNot,
-    BitwiseXor,
-    BitwiseLeftShift,
-    BitwiseRightShift,
 
     // comparison operators
     Eq,
@@ -76,7 +69,19 @@ pub enum Token {
     StarAssign,
     SlashAssign,
     PercentAssign,
-    // and more...
+    BitwiseAndAssign,
+    BitwiseOrAssign,
+    BitwiseXorAssign,
+    BitwiseLeftShiftAssign,
+    BitwiseRightShiftAssign,
+
+    // bitwise operators
+    BitwiseNot, // unary
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
+    BitwiseLeftShift,
+    BitwiseRightShift,
 
     // punctuations
     LParen,
@@ -89,6 +94,7 @@ pub enum Token {
     Semicolon,
     Dot,
     Colon,
+    BackTick,
     Quotation,
     Apostrophe,
 
@@ -180,7 +186,7 @@ impl Token {
 
     pub fn new_literal_num(token: String) -> Self {
         // println!("token: {}", token);
-        // Token::Num(69)
+        // Token::Num(71)
         Token::Num(token.parse::<i64>().unwrap())
     }
 

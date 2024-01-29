@@ -10,7 +10,7 @@ Arc stands for **A**nother **R**ust based **C**ompiler. Arc is an _experimental_
 
 - Productions are formed by combining terms and the operators listed below, with each operator having a higher precedence than the one that follows it. All productions mentioned in this document follow a variant of EBNF (Extended Backus-Naur Form).
 
-```rs
+```rust
 |   alternation
 ()  grouping
 []  option (0 or 1 times)
@@ -23,7 +23,7 @@ The compiler only supports files that have the `.arc` extension and are encoded 
 
 #### Character Sets
 
-```rs
+```rust
 letter        = <all unicode letters> | "_" .
 decimal_digit = "0" … "9" .
 binary_digit  = "0" | "1" .
@@ -48,9 +48,9 @@ A general comment that doesn't include line breaks behaves as a space. Any other
 
 ## Identifiers
 
-They serve as names for variables and types and must being with a letter.
+They serve as names for variables and types and must begin with a letter.
 
-```rs
+```rust
 identifier = letter { letter | unicode_digit } .
 ```
 
@@ -96,7 +96,7 @@ Following are the sets of supported operators (unary and binary).
 
 ```go
 Arithmetic Operators
-+    -    *    /    %   **
++    -    *    /    %
 ++    --
 ```
 
@@ -110,16 +110,16 @@ Comparison Operators
 ==    !=    <    >    >=    <=
 ```
 
-```go
+```py
 Assignment Operators
-=     :=     +=    -=    *=
-/=    %=     &=    |=    ^=
-<<=   >>=
+=     +=    -=    *=    /=
+%=    &=    |=    ^=    <<=
+>>=
 ```
 
 ```go
 Bitwise Operators
-~    &    |    ^    <<    >>
+!    &    |    ^    <<    >>
 ```
 
 ```go
@@ -129,6 +129,7 @@ Punctuations
 {    }
 ,    ;
 .    :
+`
 ```
 
 ## Integer Literals
@@ -156,7 +157,7 @@ escaped_char  = `\` ( "n" | "r" | "t" | "v" | `\` | "'" | `"` ) .
 
 ```
 'a'
-'\\n'
+'\n'
 '2'
 ```
 
@@ -164,6 +165,7 @@ escaped_char  = `\` ( "n" | "r" | "t" | "v" | `\` | "'" | `"` ) .
 
 ```go
 string_lit = `"` { unicode_value } `"` .
+raw_string = "`" { unicode_value } "`" .
 ```
 
 ```
@@ -176,7 +178,7 @@ string_lit = `"` { unicode_value } `"` .
 
 All variables are _immutable_ by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.
 
-```rs
+```rust
 let x = 23;
 let mut z = 469;
 let weather: string = "cold";
@@ -217,7 +219,7 @@ A _string_ type is a set of string values (a sequence of characters). Length of 
 
 A _string slice_ type is a subsequence of characters derived from an existing string value.
 
-```rs
+```rust
 let s: string = "Hello, World!";
 let s_slice: string = s[3:5]; // "lo"
 let inferred_s_type = "Hello, World!"; // inferred as string
@@ -230,7 +232,7 @@ let big_s = s + " How are you?"; // concatenation
 
 A fixed size collection of objects of same type. `[]` is used to declare array.
 
-```rs
+```rust
 let arr: [u32; 3] = [1, 2, 3];
 let inferred_arr_type = [1, 2, 4, 6]; // inferred as [i32; 4]
 
@@ -242,7 +244,7 @@ let a_slice = arr[0:3] // slicing array, elements [0, 3)
 
 A fixed size collection of literals of different types. Tuple contains elements of different types. `()` is used to declare tuple.
 
-```rs
+```rust
 let tup: (i32, u64, u32) = (-5, 67, 13);
 let inferred_tup_type = (-5, 67, 13); // inferred as (i32, i32, i32)
 
@@ -254,7 +256,7 @@ let x = tup.0; // accessing tuple elements
 
 A dynamic size array. List contains elements of same type. `![]` is used to declare list.
 
-```rs
+```rust
 let a_list: [u32] = ![1, 2, 3];
 
 let x = a_list[0]; // accessing list elements
@@ -264,7 +266,7 @@ a_list.push(4); // push element to list, demonstrates the dynamic size
 
 ### Syntax for type declaration
 
-```rs
+```rust
 type t := i32 | i64 | f32 | f64
 type s := (u32, f32)
 ```
@@ -278,7 +280,7 @@ StatementList = { Statement ";" } .
 
 A block can also return a final value using the `return` keyword.
 
-```rs
+```rust
 {
     statement1;
     statement2;
@@ -290,7 +292,7 @@ Variables defined inside a block statment are scoped to itself and cannot be acc
 
 ## Flow Control
 
-```rs
+```rust
 for variable in range_expression {}
 
 while condition {}
@@ -309,7 +311,7 @@ match variable {
 
 Examples:
 
-```rs
+```rust
 for line in lines {
     print(line);
 }
@@ -337,7 +339,7 @@ match grade {
 
 ## Functions
 
-```rs
+```rust
 fx function_name(a type, b type) ~ type {
     statement1;
     statement2;
@@ -350,7 +352,7 @@ Use of `fx` for defining the function. Function name is identifier.
 
 Examples:
 
-```rs
+```rust
 fx add_u32s(a u32, b u32) ~ u32 {
     return a + b;
 }
@@ -364,7 +366,7 @@ fx say_hi() {
 
 `fx() {}` can be used to define closures. Closures are anonymous functions. Closures can be assigned to variables. Closures can be passed as arguments to other functions. Closures can capture variables from the enclosing scope. Last expression in the closure is returned without explicit mention of return keyword.
 
-```rs
+```rust
 let add = fx(a, b) { a + b };
 let multiply = fx(x, y) {
     let result = x * y;
@@ -376,7 +378,7 @@ let multiply = fx(x, y) {
 
 Errors in the program cause exceptions, that can be handled by using the `Result<success_type, error>`. Furthermore, `ok` and `err` can be used to return the success and error values respectively. `if let` syntax is used to destructure the result.
 
-```rs
+```rust
 let res = fx() ~ result<u32, string> {
     if condition {
         return ok(1);
@@ -396,7 +398,7 @@ if let ok(value) = res {
 
 Filename is automatically considered as module name. Filename can be used for imports. Child modules can be defined.
 
-```rs
+```rust
 mod module_name {
     fx a_function() {
         statement1;
@@ -420,7 +422,7 @@ mod module_name {
 
 `main` is entry point for the arc lang.
 
-```rs
+```rust
 fx main() {
     statement1;
     statement2;
@@ -450,7 +452,7 @@ function
 type
 ```
 
-```rs
+```rust
 pub fx public(a i32) ~ i32 {
     statement;
     return expr;
@@ -466,7 +468,7 @@ fx private(b u64) ~ bool { // this function is private
 
 `struct`, `enum`, `impl`.
 
-```rs
+```rust
 struct StructName {
     field1: u32,
     field2: u32,
