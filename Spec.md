@@ -231,7 +231,22 @@ let big_s = s + " How are you?"; // concatenation
 ### Array types
 
 A fixed size collection of objects of same type. `[]` is used to declare array.
+#### Syntax
+```rust
+// Declaring an array
+let <array_name>: [<element_type>; <size>] = [element1, element2...];
+```
+#### Features
+array.*len*()  
+This return a non negative integer as the length of the array (number of elements).  
 
+array *[M]*  
+This returns the element in the array at the Mth index.  
+
+array *[M:N]*  
+This return the slice of the array from index M, to index N-1. The returned type is also an array.  
+
+#### Examples  
 ```rust
 let arr: [u32; 3] = [1, 2, 3];
 let inferred_arr_type = [1, 2, 4, 6]; // inferred as [i32; 4]
@@ -243,7 +258,28 @@ let a_slice = arr[0:3] // slicing array, elements [0, 3)
 ### Tuple types
 
 A fixed size collection of literals of different types. Tuple contains elements of different types. `()` is used to declare tuple.
+#### Syntax
+```rust
+// Declaring an tuple
+let <tuple_name>: (<element1_type>, <element2_type>,...) = (element1, element2...);
+// or
+let <tuple_name>: (<element_type>, <size>) = (element1, element2...);
+```
 
+#### Features
+tuple.*len*()  
+This return a non negative integer as the length of the tuple (number of elements).  
+
+tuple.*(M)*  
+This returns the element in the tuple at the Mth index.  
+
+tuple *[M:N]*  
+This return the slice of the array from index M, to index N-1. The returned type is also an array.  
+
+let <iterable_tuple> = tuple;  
+The tuple type also supports unpacking (destructuring) as shown in the example.  
+
+#### Examples 
 ```rust
 let tup: (i32, u64, u32) = (-5, 67, 13);
 let inferred_tup_type = (-5, 67, 13); // inferred as (i32, i32, i32)
@@ -254,10 +290,29 @@ let x = tup.0; // accessing tuple elements
 
 ### List types
 
-A dynamic size array. List contains elements of same type. `![]` is used to declare list.
-
+A dynamic size array. List contains elements of same type. `<>` is used to declare list.
+#### Syntax
 ```rust
-let a_list: [u32] = ![1, 2, 3];
+// Declaring an list
+let <list_name>: <<element_type>> = <element1, element2...>;
+```
+
+#### Features
+list.*len*()  
+This return a non negative integer as the length of the list (number of elements).  
+
+list *[M]*  
+This returns the element in the list at the Mth index.  
+
+list *[M:N]*  
+This return the slice of the array from index M, to index N-1. The returned type is also an array.  
+
+list.*push(element)*  
+This appends element to the end of the list, as the lists do not have a fixed sixe and can grow from both directions.   
+
+#### Examples 
+```rust
+let a_list: <u32> = <1, 2, 3>;
 
 let x = a_list[0]; // accessing list elements
 let a_slice = a_list[0:3] // slicing list, elements [0, 3)
