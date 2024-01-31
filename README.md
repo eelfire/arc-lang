@@ -14,5 +14,5 @@
 - The ```Spec.md``` file describes the syntax and grammar for our ([Team - arc-lang](https://github.com/IITGN-CS327-2024/our-own-compiler-arc-lang)) simple, imperative programming language, ```Arc```.
 
 ### Assignemtn 2  
-- We build a lexer (`lexer.rs`) and test it with our custom test cases present in the folder named `testcases`. 
+- We build a lexer (`/arc/src/lexer.rs`) and test it with our custom test cases present in the folder named `/arc/testcases`. 
  
