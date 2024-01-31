@@ -176,7 +176,12 @@ raw_string = "`" { unicode_value } "`" .
 
 ## Variables
 
-All variables are _immutable_ by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.
+All variables are _immutable_ by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.  
+Variables names must follow the following rules:
+1) Must not be a keyword as defined in the *Keywords* section.  
+2) Must start with a letter or an underscore and must not start with digit (For example, Valid--> `_myVar`, Invalid--> `1one`).
+3) Must only contain alpha-numeric characters along with the underscore.
+4) Are case-sensitive.  
 
 ```rust
 let x = 23;
@@ -346,10 +351,10 @@ A block can also return a final value using the `return` keyword.
 Variables defined inside a block statment are scoped to itself and cannot be accessed outside. Variables defined in parent block can be accessed in inner/child blocks.
 
 ## Flow Control
-
+#### Examples  
 ```rust
 for variable in range_expression {}
-
+    
 while condition {}
 
 if condition1 {} else if condition2 {} else {}
@@ -362,6 +367,26 @@ match variable {
 }
 ```
 
+Special keywords such as `break`, `continue` and `return` are used arbitrarily jump out of loops to manipulate the execution flow.  
+`break` jumps out of the iteration.  
+`continue` skips the iteration.  
+`return` exits functions and return a value to the caller.  
+
+#### Examples  
+```rust
+for variable in range_expression {}
+    if condition1 {}
+        break; 
+while condition {}
+    if condition1 {}
+        continue;
+
+fx add(a i32, b i32) ~ i32 {
+    let c = a + b;
+    return c;
+}
+
+```
 `if - else if - else` and `match` conditionals can have return value.
 
 Examples:
@@ -429,10 +454,11 @@ let multiply = fx(x, y) {
 };
 ```
 
-## Error Handling (Exceptions)
+## Exception Handling
 
-Errors in the program cause exceptions, that can be handled by using the `Result<success_type, error>`. Furthermore, `ok` and `err` can be used to return the success and error values respectively. `if let` syntax is used to destructure the result.
+Exceptions can occur during the runtime of a program, causing the program to exhivit an undefined behaviour. The programmer can handle these exceptions by using the `Result<success_type, error>`. Furthermore, `ok` and `err` can be used to return the success and error values respectively. `if let` syntax is used to destructure the result.
 
+#### Examples  
 ```rust
 let res = fx() ~ result<u32, string> {
     if condition {
