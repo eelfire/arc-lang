@@ -108,8 +108,11 @@ pub enum Token {
     Ident(String),
 
     // Misc
-    SingleLineComment(String),
-    MultiLineComment(String),
+    //SingleLineComment(String),
+    //MultiLineComment(String),
+    SingleLineComment,
+    MultiLineComment,
+
     EOF,
 }
 
@@ -179,6 +182,8 @@ impl Token {
             // literals
             "true" => Token::Bool(true),
             "false" => Token::Bool(false),
+
+            // Comments
 
             _ => Token::Ident(token),
         }

@@ -3,10 +3,10 @@ use std::path::Path;
 use crate::token::Token;
 
 pub fn run() {
-    println!("hi from lexer");
+    println!("Lexing Stage Initiated...");
 
     // read chars from utf-8 encoded file
-    let path = Path::new("testcases/add.arc");
+    let path = Path::new("testcases/bye_world.arc");
     let contents = std::fs::read_to_string(path).expect("failed to read file");
 
     let mut tokens = Vec::new();
@@ -15,7 +15,8 @@ pub fn run() {
     // let mut is_number = false;
     // let mut is_string = false;
     // let mut is_char = false;
-    let mut is_last = [false, false, false, false, false]; // [is_operator, is_number, is_string, is_char, is_identifier]
+    let mut is_last = [false, false, false, false, false, false]; // [is_operator, is_number, is_string, is_char, is_identifier, is_comment]
+    let mut prev_ch: char = ' ';
 
     for ch in contents.chars() {
         if is_last[2] {
@@ -50,7 +51,30 @@ pub fn run() {
             }
         } else if is_last[0] {
             is_last[0] = false;
-        }
+        } else if is_last[5] {
+            if let Some(last_token) = tokens.last() {
+                match last_token {
+                    Token::SingleLineComment => {
+                        if ch == '\n' {
+                            is_last[5] = false;
+                            continue;
+                        } else {
+                            continue;
+                        }
+                    }
+                    Token::MultiLineComment => {
+                        if prev_ch == '*' && ch == '/' {
+                            is_last[5] = false;
+                            continue;
+                        } else {
+                            prev_ch = ch;
+                            continue;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }        
 
         match ch {
             _ if ch.is_whitespace() => {
@@ -123,8 +147,24 @@ pub fn run() {
             }
             '+' | '-' | '*' | '/' | '%' | '&' | '|' | '!' | '=' | '<' | '>' | '`' | '^' => {
                 // is_operator = true;
-                is_last[0] = true;
-                token.push(ch);
+                if ch == '*' && prev_ch == '/' {
+                    tokens.push(Token::MultiLineComment);
+                    is_last[5] = true;
+                    token.clear();
+                } else if ch == '/' && prev_ch == '/' {
+                    if let Some(popped) = tokens.pop() {
+                        if popped != Token::Slash {
+                            tokens.push(popped);
+                        }
+                    }                    
+                    tokens.push(Token::SingleLineComment);
+                    is_last[5] = true;
+                    token.clear();
+                }
+                else {
+                    is_last[0] = true;
+                    token.push(ch);
+                }
             }
             _ => {
                 if is_last[0] {
@@ -136,8 +176,9 @@ pub fn run() {
                 token.push(ch);
             }
         }
+        prev_ch = ch;
     }
-
+    println!("Lexing Stage Complete...");
     println!("{:?}", tokens);
 
     // for c in contents.chars() {
