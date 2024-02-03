@@ -6,7 +6,7 @@ pub fn run() {
     println!("Lexing Stage Initiated...");
 
     // read chars from utf-8 encoded file
-    let path = Path::new("testcases/bye_world.arc");
+    let path = Path::new("testcases/List.arc");
     let contents = std::fs::read_to_string(path).expect("failed to read file");
 
     let mut tokens = Vec::new();
@@ -145,7 +145,15 @@ pub fn run() {
                 }
                 token.push(ch);
             }
-            '+' | '-' | '*' | '/' | '%' | '&' | '|' | '!' | '=' | '<' | '>' | '`' | '^' => {
+            '<' => {
+                handle_token(&mut token, &mut tokens, &mut is_last[4]);
+                tokens.push(Token::LAngle);
+            }
+            '>' => {
+                handle_token(&mut token, &mut tokens, &mut is_last[4]);
+                tokens.push(Token::RAngle);
+            }
+            '+' | '-' | '*' | '/' | '%' | '&' | '|' | '!' | '=' | '`' | '^' => {
                 // is_operator = true;
                 if ch == '*' && prev_ch == '/' {
                     tokens.push(Token::MultiLineComment);

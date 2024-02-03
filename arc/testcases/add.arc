@@ -8,4 +8,5 @@ fx main() {
     let b = 5;
     let c i32 = add(a, b);
     print("{}", c);
+    let ch char = ' ';
 }

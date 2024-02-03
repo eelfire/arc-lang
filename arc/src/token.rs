@@ -86,6 +86,8 @@ pub enum Token {
     // punctuations
     LParen,
     RParen,
+    LAngle,
+    RAngle,
     LBracket,
     RBracket,
     LBrace,
@@ -167,8 +169,8 @@ impl Token {
             // comparison operators
             "==" => Token::Eq,
             "!=" => Token::Neq,
-            ">" => Token::Gt,
-            "<" => Token::Lt,
+            // ">" => Token::Gt,
+            // "<" => Token::Lt,
             ">=" => Token::Gte,
 
             // assignment operators
