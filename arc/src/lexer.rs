@@ -2,19 +2,16 @@ use std::path::Path;
 
 use crate::token::Token;
 
-pub fn run() {
+pub fn run(input_file: &str) {
     println!("Lexing Stage Initiated...");
 
     // read chars from utf-8 encoded file
-    let path = Path::new("testcases/List.arc");
+    let path = Path::new(input_file);
     let contents = std::fs::read_to_string(path).expect("failed to read file");
 
     let mut tokens = Vec::new();
     let mut token = String::new();
-    // let mut is_operator = false;
-    // let mut is_number = false;
-    // let mut is_string = false;
-    // let mut is_char = false;
+
     let mut is_last = [false, false, false, false, false, false]; // [is_operator, is_number, is_string, is_char, is_identifier, is_comment]
     let mut prev_ch: char = ' ';
 
@@ -74,7 +71,7 @@ pub fn run() {
                     _ => {}
                 }
             }
-        }        
+        }
 
         match ch {
             _ if ch.is_whitespace() => {
@@ -164,12 +161,11 @@ pub fn run() {
                         if popped != Token::Slash {
                             tokens.push(popped);
                         }
-                    }                    
+                    }
                     tokens.push(Token::SingleLineComment);
                     is_last[5] = true;
                     token.clear();
-                }
-                else {
+                } else {
                     is_last[0] = true;
                     token.push(ch);
                 }
@@ -188,13 +184,6 @@ pub fn run() {
     }
     println!("Lexing Stage Complete...");
     println!("{:?}", tokens);
-
-    // for c in contents.chars() {
-    //     if c == '(' {
-    //         let tok = Token::LParen;
-    //         println!("{:?}", tok);
-    //     }
-    // }
 }
 
 fn handle_token(token: &mut String, tokens: &mut Vec<Token>, is_identifier: &mut bool) {

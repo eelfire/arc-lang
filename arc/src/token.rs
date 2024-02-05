@@ -110,8 +110,6 @@ pub enum Token {
     Ident(String),
 
     // Misc
-    //SingleLineComment(String),
-    //MultiLineComment(String),
     SingleLineComment,
     MultiLineComment,
 
@@ -186,19 +184,26 @@ impl Token {
             "false" => Token::Bool(false),
 
             // Comments
-
             _ => Token::Ident(token),
         }
     }
 
     pub fn new_literal_num(token: String) -> Self {
-        // println!("token: {}", token);
-        // Token::Num(71)
-        Token::Num(token.parse::<i64>().unwrap())
+        match token.parse::<i64>() {
+            Ok(num) => Token::Num(num),
+            Err(_) => {
+                eprintln!("Error: Could not parse to literal to num: {}", token);
+            }
+        }
     }
 
     pub fn new_literal_char(token: String) -> Self {
-        Token::Char(token.chars().nth(0).unwrap())
+        match token.chars().nth(0) {
+            Some(ch) => Token::Char(ch),
+            None => {
+                eprintln!("Error: Could not parse to literal to char: {}", token);
+            }
+        }
     }
 
     pub fn new_literal_string(token: String) -> Self {
