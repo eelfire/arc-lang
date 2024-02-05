@@ -197,10 +197,18 @@ fn handle_token(token: &mut String, tokens: &mut Vec<Token>, is_identifier: &mut
 fn handle_token_literal(token: &mut String, tokens: &mut Vec<Token>, token_type: Token) {
     match token_type {
         Token::Num(_) => {
-            tokens.push(Token::new_literal_num(token.clone()));
+            let tok = Token::new_literal_num(token.clone());
+            if let Some(t) = tok {
+                tokens.push(t);
+            }
+            // tokens.push();
         }
         Token::Char(_) => {
-            tokens.push(Token::new_literal_char(token.clone()));
+            let tok = Token::new_literal_char(token.clone());
+            if let Some(t) = tok {
+                tokens.push(t);
+            }
+            // tokens.push();
         }
         Token::String(_) => {
             tokens.push(Token::new_literal_string(token.clone()));
