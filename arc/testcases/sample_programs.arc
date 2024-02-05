@@ -70,7 +70,7 @@ fx main() {
 fx main() {
   let mut x = 0;
 
-  for {
+  while true {
     x += 1;
     if x == 42 {
       break;
