@@ -1,6 +1,6 @@
 # The Arc Programming Language Specification
 
-##### Last updated: Jan 22, 2024
+##### Last updated: Jan 31, 2024
 
 ## Introduction
 
@@ -178,7 +178,8 @@ raw_string = "`" { unicode_value } "`" .
 
 All variables are _immutable_ by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.  
 Variables names must follow the following rules:
-1) Must not be a keyword as defined in the *Keywords* section.  
+
+1) Must not be a keyword as defined in the _Keywords_ section.  
 2) Must start with a letter or an underscore and must not start with digit (For example, Valid--> `_myVar`, Invalid--> `1one`).
 3) Must only contain alpha-numeric characters along with the underscore.
 4) Are case-sensitive.  
@@ -186,7 +187,7 @@ Variables names must follow the following rules:
 ```rust
 let x = 23;
 let mut z = 469;
-let weather: string = "cold";
+let weather string = "cold";
 let m;      // illegal: a type must be defined for uninitialised variables
 ```
 
@@ -196,9 +197,9 @@ let m;      // illegal: a type must be defined for uninitialised variables
 
 Keyword for boolean type is `bool` whose truth values are predeclared constants `true` and `false`.
 
-```
-let x: bool = true;
-let y: bool = false;
+```rs
+let x bool = true;
+let y bool = false;
 ```
 
 ### Numeric types
@@ -225,35 +226,49 @@ A _string_ type is a set of string values (a sequence of characters). Length of 
 A _string slice_ type is a subsequence of characters derived from an existing string value.
 
 ```rust
-let s: string = "Hello, World!";
-let s_slice: string = s[3:5]; // "lo"
+let s string = "Hello, World!";
+let s_slice string = s[3:5]; // "lo"
 let inferred_s_type = "Hello, World!"; // inferred as string
 
 let s_len = s.len(); // length of string, impl can be used to define len() for types [similar to methods]
 let big_s = s + " How are you?"; // concatenation
 ```
 
+`str.len()`
+This returns a non negative integer as the length of the string (number of chars).  
+
+`str[M:N]`
+This returns the slice of the string from index M, to index N-1. The returned type is also an string.
+
+`str1 + str2`
+This returns a new string by concatenating the two strings.
+
 ### Array types
 
 A fixed size collection of objects of same type. `[]` is used to declare array.
+
 #### Syntax
+
 ```rust
 // Declaring an array
-let <array_name>: [<element_type>; <size>] = [element1, element2...];
+let array_name [element_type; len] = [element1, element2...];
 ```
-#### Features
-array.*len*()  
-This return a non negative integer as the length of the array (number of elements).  
 
-array *[M]*  
+#### Features
+
+`array.len()`
+This returns a non negative integer as the length of the array (number of elements).  
+
+`array[M]`
 This returns the element in the array at the Mth index.  
 
-array *[M:N]*  
-This return the slice of the array from index M, to index N-1. The returned type is also an array.  
+`array[M:N]`
+This returns the slice of the array from index M, to index N-1. The returned type is also an array.  
 
 #### Examples  
+
 ```rust
-let arr: [u32; 3] = [1, 2, 3];
+let arr [u32; 3] = [1, 2, 3];
 let inferred_arr_type = [1, 2, 4, 6]; // inferred as [i32; 4]
 
 let x = arr[0]; // accessing array elements
@@ -263,30 +278,31 @@ let a_slice = arr[0:3] // slicing array, elements [0, 3)
 ### Tuple types
 
 A fixed size collection of literals of different types. Tuple contains elements of different types. `()` is used to declare tuple.
+
 #### Syntax
+
 ```rust
 // Declaring an tuple
-let <tuple_name>: (<element1_type>, <element2_type>,...) = (element1, element2...);
+let tuple_name (element1_type, element2_type,...) = (element1, element2...);
 // or
-let <tuple_name>: (<element_type>, <size>) = (element1, element2...);
+let tuple_name (element_type, size) = (element1, element2...);
 ```
 
 #### Features
-tuple.*len*()  
-This return a non negative integer as the length of the tuple (number of elements).  
 
-tuple.*(M)*  
+`tuple.len()`
+This returns a non negative integer as the length of the tuple (number of elements).  
+
+`tuple.M`
 This returns the element in the tuple at the Mth index.  
 
-tuple *[M:N]*  
-This return the slice of the array from index M, to index N-1. The returned type is also an array.  
-
-let <iterable_tuple> = tuple;  
+`let (element1, element2...) = tuple;`
 The tuple type also supports unpacking (destructuring) as shown in the example.  
 
-#### Examples 
+#### Examples
+
 ```rust
-let tup: (i32, u64, u32) = (-5, 67, 13);
+let tup (i32, u64, u32) = (-5, 67, 13);
 let inferred_tup_type = (-5, 67, 13); // inferred as (i32, i32, i32)
 
 let (x, y, z) = tup; // destructuring
@@ -296,28 +312,32 @@ let x = tup.0; // accessing tuple elements
 ### List types
 
 A dynamic size array. List contains elements of same type. `<>` is used to declare list.
+
 #### Syntax
+
 ```rust
 // Declaring an list
-let <list_name>: <<element_type>> = <element1, element2...>;
+let list_name element_type = <element1, element2...>;
 ```
 
 #### Features
-list.*len*()  
-This return a non negative integer as the length of the list (number of elements).  
 
-list *[M]*  
+`list.len()`
+This returns a non negative integer as the length of the list (number of elements).  
+
+`list[M]`
 This returns the element in the list at the Mth index.  
 
-list *[M:N]*  
-This return the slice of the array from index M, to index N-1. The returned type is also an array.  
+`list[M:N]`
+This returns the slice of the array from index M, to index N-1. The returned type is also an array.  
 
-list.*push(element)*  
-This appends element to the end of the list, as the lists do not have a fixed sixe and can grow from both directions.   
+`list.push(element)`
+This appends element to the end of the list, as the lists do not have a fixed size and can grow from both directions.
 
-#### Examples 
+#### Examples
+
 ```rust
-let a_list: <u32> = <1, 2, 3>;
+let a_list <u32> = <1, 2, 3>;
 
 let x = a_list[0]; // accessing list elements
 let a_slice = a_list[0:3] // slicing list, elements [0, 3)
@@ -327,8 +347,8 @@ a_list.push(4); // push element to list, demonstrates the dynamic size
 ### Syntax for type declaration
 
 ```rust
-type t := i32 | i64 | f32 | f64
-type s := (u32, f32)
+type t = i32 | i64 | f32 | f64
+type s = (u32, f32)
 ```
 
 ## Blocks & Scope
@@ -351,7 +371,9 @@ A block can also return a final value using the `return` keyword.
 Variables defined inside a block statment are scoped to itself and cannot be accessed outside. Variables defined in parent block can be accessed in inner/child blocks.
 
 ## Flow Control
-#### Examples  
+
+#### Syntax
+
 ```rust
 for variable in range_expression {}
     
@@ -359,37 +381,23 @@ while condition {}
 
 if condition1 {} else if condition2 {} else {}
 
-match variable {
-    condition1 => {},
-    condition2 => {},
-    condition3 => {},
+match expression {
+    expression1 => {},
+    expression2 => {},
+    expression3 => {},
     _ => {},
 }
+// return of expression is matched with the cases [expression1, expression2, ...] and the corresponding block is executed
 ```
 
-Special keywords such as `break`, `continue` and `return` are used arbitrarily jump out of loops to manipulate the execution flow.  
-`break` jumps out of the iteration.  
-`continue` skips the iteration.  
-`return` exits functions and return a value to the caller.  
+Special keywords such as `break`, `continue` and `return` are used arbitrarily jump out of loops to manipulate the execution flow.
 
-#### Examples  
-```rust
-for variable in range_expression {}
-    if condition1 {}
-        break; 
-while condition {}
-    if condition1 {}
-        continue;
+- `break` jumps out of the iteration.  
+- `continue` skips the iteration.  
+- `return` exits functions and return a value to the caller.  
+- `if - else if - else` and `match` conditionals can have return value.
 
-fx add(a i32, b i32) ~ i32 {
-    let c = a + b;
-    return c;
-}
-
-```
-`if - else if - else` and `match` conditionals can have return value.
-
-Examples:
+#### Examples
 
 ```rust
 for line in lines {
@@ -401,9 +409,9 @@ while x > 0 {
     x--;
 }
 
-if isSunny {
+if is_sunny {
     print("It's a sunny day!");
-} else if isRaining {
+} else if is_raining {
     print("It's raining outside.");
 } else {
     print("The weather is unknown.");
@@ -430,7 +438,7 @@ fx function_name(a type, b type) ~ type {
 
 Use of `fx` for defining the function. Function name is identifier.
 
-Examples:
+#### Examples
 
 ```rust
 fx add_u32s(a u32, b u32) ~ u32 {
@@ -444,7 +452,15 @@ fx say_hi() {
 
 ## Closures
 
-`fx() {}` can be used to define closures. Closures are anonymous functions. Closures can be assigned to variables. Closures can be passed as arguments to other functions. Closures can capture variables from the enclosing scope. Last expression in the closure is returned without explicit mention of return keyword.
+`fx() {}` can be used to define closures.
+
+- Closures
+  - are anonymous functions
+  - can be assigned to variables
+  - can be passed as arguments to other functions
+  - can capture variables from the enclosing scope
+
+Last expression in the closure is returned without explicit mention of return keyword.
 
 ```rust
 let add = fx(a, b) { a + b };
@@ -456,9 +472,10 @@ let multiply = fx(x, y) {
 
 ## Exception Handling
 
-Exceptions can occur during the runtime of a program, causing the program to exhivit an undefined behaviour. The programmer can handle these exceptions by using the `Result<success_type, error>`. Furthermore, `ok` and `err` can be used to return the success and error values respectively. `if let` syntax is used to destructure the result.
+Exceptions can occur during the runtime of a program, causing the program to exhibit an undefined behaviour. The programmer can handle these exceptions by using the `Result<success_type, error>`. Furthermore, `ok` and `err` can be used to return the success and error values respectively. `if let` syntax is used to destructure the result.
 
 #### Examples  
+
 ```rust
 let res = fx() ~ result<u32, string> {
     if condition {
@@ -531,6 +548,8 @@ Following are exportable using `pub` keyword.
 ```
 function
 type
+struct
+enum
 ```
 
 ```rust
