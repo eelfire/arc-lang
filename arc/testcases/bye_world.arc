@@ -4,7 +4,15 @@ synonyms of 'BYE' */
 
 fx Bye_m8() {
     // print("Bye.\nAdieu.\nAdieu.\nArrivederci.\nBye-bye.\nCheerio.\nGood day.\nSayonara.\nSo long.); \\This line has an error and the text is not being read
-    print("Bye.\nAdieu.\nAdieu.\nArrivederci.\nBye-bye.\nCheerio.\nGood day.\nSayonara.\nSo long.");
+    print("Bye.
+Adieu.
+Adieu.
+Arrivederci.
+Bye-bye.
+Cheerio.
+Good day.
+Sayonara.
+So long.");
 }
 
 // Done
