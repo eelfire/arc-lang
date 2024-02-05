@@ -36,6 +36,7 @@ pub enum Token {
     Err,
 
     Type,
+    As,
     Struct,
     Enum,
     Impl,
@@ -142,6 +143,7 @@ impl Token {
             "ok" => Token::Okay,
             "err" => Token::Err,
             "type" => Token::Type,
+            "as" => Token::As,
             "struct" => Token::Struct,
             "enum" => Token::Enum,
             "impl " => Token::Impl,
@@ -188,21 +190,23 @@ impl Token {
         }
     }
 
-    pub fn new_literal_num(token: String) -> Self {
-        match token.parse::<i64>() {
-            Ok(num) => Token::Num(num),
-            Err(_) => {
-                eprintln!("Error: Could not parse to literal to num: {}", token);
-            }
+    pub fn new_literal_num(token: String) -> Option<Self> {
+        let num = token.parse::<i64>();
+        if let Ok(n) = num {
+            Some(Token::Num(n))
+        } else {
+            eprintln!("Error: Could not parse to literal to num: {}", token);
+            None
         }
     }
 
-    pub fn new_literal_char(token: String) -> Self {
-        match token.chars().nth(0) {
-            Some(ch) => Token::Char(ch),
-            None => {
-                eprintln!("Error: Could not parse to literal to char: {}", token);
-            }
+    pub fn new_literal_char(token: String) -> Option<Self> {
+        let char = token.chars().nth(0);
+        if let Some(c) = char {
+            Some(Token::Char(c))
+        } else {
+            eprintln!("Error: Could not parse to literal to char: {}", token);
+            None
         }
     }
 
