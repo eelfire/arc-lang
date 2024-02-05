@@ -7,11 +7,14 @@ This document outlines the various token classes used in the programming languag
 Keywords are reserved words that have special meaning in the language. They cannot be used as identifiers.
 
 - `Let`, `Mut`, `As`: Used for variable declarations and type assertions, allowing for mutable and immutable bindings.
-- `Fx`, `Tilde`: Function declaration keyword and .
+- `Fx`, `Tilde`: Function declaration keyword (_fx_) and specify return type with tilde (~).
 - `If`, `ElseIf`, `Else`, `While`, `For`, `In`, `Match`, `Continue`, `Break`, `Return`: Control flow keywords for execution of the program, allowing for conditional statements, loops, and early exits.
-- `Import`, `Pub`, `Mod`, `Super`: Module and visibility management, where Import is for importing modules, Pub for making entities public, Mod for defining modules, and Super for accessing parent module contents.
-- Error handling keywords: `Result`, `Okay`, `Err`.
-- Structure definition keywords: `Type`, `Struct`, `Enum`, `Impl`.
+- `Result`, `Okay`, `Err`: Used for error handling, where _Result_ represents a type that can return either a success (ok) or an error (err).
+- `Type`: Defines new types, allowing for the creation of aliases or new data types.
+- `Struct`: Structured data type, which is a collection of fields to represent an entity with multiple attributes.
+- `Enum`: Defines an enumeration, which is a type that can have one of a few predefined values.
+- `Impl`: Define implementations of functions and methods associated with a specific type.
+- `Import`, `Pub`, `Mod`, `Super`: Module and visibility management, where _Import_ is for importing modules, _Pub_ for making entities public, _Mod_ for defining modules, and _Super_ for accessing parent module contents.
 - `Itself`: Refers to the current instance of a class or struct.
 
 ## Operators

@@ -192,7 +192,8 @@ impl Token {
         match token.parse::<i64>() {
             Ok(num) => Token::Num(num),
             Err(_) => {
-                eprintln!("Error: Could not parse to literal to num: {}", token);
+                eprintln!("Error: Could not parse literal to num: {}", token);
+                Token::Num(0)
             }
         }
     }
@@ -202,6 +203,7 @@ impl Token {
             Some(ch) => Token::Char(ch),
             None => {
                 eprintln!("Error: Could not parse to literal to char: {}", token);
+                Token::Char(' ')
             }
         }
     }
