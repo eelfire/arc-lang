@@ -12,11 +12,13 @@ pub fn run(input_file: &str) {
     let mut tokens = Vec::new();
     let mut token = String::new();
 
-    let mut is_last = [false, false, false, false, false, false]; // [is_operator, is_number, is_string, is_char, is_identifier, is_comment]
+    // [is_operator, is_number, is_string, is_char, is_identifier, is_comment]
+    let mut is_last = [false, false, false, false, false, false];
     let mut prev_ch: char = ' ';
 
     for ch in contents.chars() {
         if is_last[2] {
+            // is_string
             if ch == '"' {
                 handle_token_literal(
                     &mut token,
@@ -30,6 +32,7 @@ pub fn run(input_file: &str) {
             }
             continue;
         } else if is_last[3] {
+            // is_char
             if ch == '\'' {
                 handle_token_literal(&mut token, &mut tokens, Token::Char('d'));
                 is_last[3] = false;
@@ -39,16 +42,26 @@ pub fn run(input_file: &str) {
             }
             continue;
         } else if is_last[1] && !is_last[4] {
+            // is_number and not identifier
             if ch.is_ascii_digit() {
+                token.push(ch);
+                continue;
+            } else if ch == '_' {
+                // 10_000
+                continue;
+            } else if prev_ch == '0' && is_ch_box(&ch) {
                 token.push(ch);
                 continue;
             } else {
                 handle_token_literal(&mut token, &mut tokens, Token::Num(0));
                 is_last[1] = false;
             }
-        } else if is_last[0] {
-            is_last[0] = false;
-        } else if is_last[5] {
+        }
+        // else if is_last[0] {
+        //     is_last[0] = false;
+        // }
+        else if is_last[5] {
+            // is_comment
             if let Some(last_token) = tokens.last() {
                 match last_token {
                     Token::SingleLineComment => {
@@ -166,8 +179,14 @@ pub fn run(input_file: &str) {
                     is_last[5] = true;
                     token.clear();
                 } else {
+                    if !is_last[0] {
+                        handle_token(&mut token, &mut tokens, &mut is_last[4]);
+                    }
                     is_last[0] = true;
                     token.push(ch);
+                    if ch == '=' {
+                        handle_token(&mut token, &mut tokens, &mut is_last[4]);
+                    }
                 }
             }
             _ => {
@@ -187,6 +206,7 @@ pub fn run(input_file: &str) {
 }
 
 fn handle_token(token: &mut String, tokens: &mut Vec<Token>, is_identifier: &mut bool) {
+    // println!("token: {:?}", token);
     if !token.is_empty() {
         tokens.push(Token::new(token.clone()));
         token.clear();
@@ -221,4 +241,11 @@ fn handle_token_literal(token: &mut String, tokens: &mut Vec<Token>, token_type:
         }
     }
     token.clear();
+}
+
+fn is_ch_box(ch: &char) -> bool {
+    match ch {
+        'b' | 'B' | 'o' | 'O' | 'x' | 'X' => true,
+        _ => false,
+    }
 }

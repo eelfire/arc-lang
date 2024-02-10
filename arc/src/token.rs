@@ -191,7 +191,16 @@ impl Token {
     }
 
     pub fn new_literal_num(token: String) -> Option<Self> {
-        let num = token.parse::<i64>();
+        let num = if token.len() > 1 {
+            match &token[0..2] {
+                "0b" | "0B" => i64::from_str_radix(&token[2..], 2),
+                "0o" | "0O" => i64::from_str_radix(&token[2..], 8),
+                "0x" | "0X" => i64::from_str_radix(&token[2..], 16),
+                _ => token.parse::<i64>(),
+            }
+        } else {
+            token.parse::<i64>()
+        };
         if let Ok(n) = num {
             Some(Token::Num(n))
         } else {
@@ -199,6 +208,11 @@ impl Token {
             None
         }
     }
+
+    // pub fn new_literal_num(token: String) -> Option<Self> {
+    //     // 0b1010, 0o123, 0x1A
+    //     // 0B1010, 0O123, 0X1A
+    // }
 
     pub fn new_literal_char(token: String) -> Option<Self> {
         let char = token.chars().nth(0);
