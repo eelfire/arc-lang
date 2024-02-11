@@ -2,7 +2,7 @@ use std::path::Path;
 
 use crate::token::Token;
 
-pub fn run(input_file: &str) {
+pub fn run(input_file: &str) -> Vec<Token> {
     println!("Lexing Stage Initiated...");
 
     // read chars from utf-8 encoded file
@@ -202,7 +202,8 @@ pub fn run(input_file: &str) {
         prev_ch = ch;
     }
     println!("Lexing Stage Complete...");
-    println!("{:?}", tokens);
+    // println!("{:?}", tokens);
+    return tokens;
 }
 
 fn handle_token(token: &mut String, tokens: &mut Vec<Token>, is_identifier: &mut bool) {

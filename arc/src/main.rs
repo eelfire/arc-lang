@@ -1,4 +1,5 @@
 pub mod lexer;
+pub mod parser;
 pub mod token;
 
 fn main() {
@@ -8,5 +9,6 @@ fn main() {
         println!("Usage: arc <input-file>");
         std::process::exit(1);
     }
-    lexer::run(args[1].as_str());
+    let file_path = args[1].as_str();
+    parser::run(file_path);
 }
