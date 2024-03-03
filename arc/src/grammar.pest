@@ -3,9 +3,8 @@ COMMENT           = _{ SingleLineComment | MultiLineComment }
 SingleLineComment = @{ "//" ~ (!"\n" ~ ANY)* }
 MultiLineComment  = @{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
-IDENTIFIER = @{ !KEYWORD ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-// KEYWORD    = @{ "fx" | "let" | "mut" | "as" | TYPE | "import" | "pub" | "mod" | "super" | "self" | "if" | "else" | "else if" | "while" | "for" | "in" | "continue" | "break" | "match" | "impl" | "struct" | "enum" }
-KEYWORD     =  {
+IDENTIFIER = @{ !(KEYWORD ~ !ASCII_ALPHANUMERIC) ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+KEYWORD    =  {
     a_fx
   | a_let
   | a_mut
@@ -33,6 +32,7 @@ KEYWORD     =  {
   | a_type
   | TYPE
 }
+
 a_fx        = _{ "fx" }
 a_tilde     = _{ "~" }
 a_let       =  { "let" }
@@ -135,48 +135,26 @@ remainder_assign = { "%=" }
 
 STATEMENT = {
     a_let? ~ a_mut? ~ IDENTIFIER ~ TYPE? ~ ASSIGNMENT ~ (CLOSURE | FUNCTION_CALL | EXPRESSION) ~ ";"
-  | (FUNCTION_CALL | IMPL_ACCESS) ~ ";"
+  | (FUNCTION_CALL | IMPL_ACCESS | MODULE_ACCESS) ~ ";"
   | IF_STATEMENT
   | MATCH_STATEMENT
   | FOR_LOOP
   | WHILE_LOOP
 }
 
-IF_STATEMENT = {
-    "if" ~ EXPRESSION ~ BLOCK ~ ELSE_IF_STATEMENT* ~ ELSE_BLOCK?
-}
+IF_STATEMENT      = { "if" ~ EXPRESSION ~ BLOCK ~ ELSE_IF_STATEMENT* ~ ELSE_BLOCK? }
+ELSE_IF_STATEMENT = { "else" ~ "if" ~ EXPRESSION ~ BLOCK }
+ELSE_BLOCK        = { "else" ~ BLOCK }
 
-ELSE_IF_STATEMENT = {
-    "else" ~ "if" ~ EXPRESSION ~ BLOCK
-}
+BLOCK = { "{" ~ STATEMENT* ~ "}" }
 
-ELSE_BLOCK = {
-    "else" ~ BLOCK
-}
+MATCH_STATEMENT = { "match" ~ EXPRESSION ~ "{" ~ MATCH_CASE* ~ "}" }
+MATCH_CASE      = { EXPRESSION ~ a_fat_arrow ~ EXPRESSION ~ "," }
 
-BLOCK = {
-    "{" ~ STATEMENT* ~ "}"
-}
+FOR_LOOP = { "for" ~ IDENTIFIER ~ "in" ~ RANGE ~ BLOCK }
+RANGE    = { EXPRESSION ~ ".." ~ EXPRESSION }
 
-MATCH_STATEMENT = {
-    "match" ~ EXPRESSION ~ "{" ~ MATCH_CASE* ~ "}"
-}
-
-MATCH_CASE = {
-    EXPRESSION ~ "=>" ~ EXPRESSION ~ ","
-}
-
-FOR_LOOP = {
-    "for" ~ IDENTIFIER ~ "in" ~ RANGE ~ BLOCK
-}
-
-RANGE = {
-    EXPRESSION ~ ".." ~ EXPRESSION
-}
-
-WHILE_LOOP = {
-    "while" ~ EXPRESSION ~ BLOCK
-}
+WHILE_LOOP = { "while" ~ EXPRESSION ~ BLOCK }
 
 // EXPRESSION = { TERM ~ (("+" | "-") ~ TERM)* }
 // TERM       = { FACTOR ~ (("*" | "/") ~ FACTOR)* }
@@ -186,48 +164,47 @@ FACTOR     = {
   | ARRAY_ACCESS
   | LIST_ACCESS
   | IMPL_ACCESS
+  | MODULE_ACCESS
+  | STRUCT_ENUM_ACCESS
   | DATA_TYPES ~ (a_as ~ TYPE)?
   | ("(" ~ EXPRESSION ~ ")")
 }
 
-/*
-    let a = match a {
-    1 => 1,
-    2 => 2,
-    _ => 3
-    }
+TUPLE_ACCESS       = { IDENTIFIER ~ "." ~ INTEGER }
+ARRAY_ACCESS       = { IDENTIFIER ~ "[" ~ (IDENTIFIER | INTEGER) ~ "]" }
+LIST_ACCESS        = { IDENTIFIER ~ "[" ~ (IDENTIFIER | INTEGER) ~ "]" }
+IMPL_ACCESS        = { IDENTIFIER ~ "." ~ FUNCTION_CALL }
+STRUCT_ENUM_ACCESS = { (IDENTIFIER | a_self) ~ "." ~ IDENTIFIER }
 
-    let b = if a == 1 {
-    1
-    } else if a == 2 {
-    2
-    } else {
-    3
-    }
-
-    let mut c = 0;
-    if a > b {
-    c = a;
-    } else {
-    c = b;
-*/
-
-TUPLE_ACCESS = { IDENTIFIER ~ "." ~ INTEGER }
-ARRAY_ACCESS = { IDENTIFIER ~ "[" ~ (IDENTIFIER | INTEGER) ~ "]" }
-LIST_ACCESS  = { IDENTIFIER ~ "[" ~ (IDENTIFIER | INTEGER) ~ "]" }
-IMPL_ACCESS  = { IDENTIFIER ~ "." ~ FUNCTION_CALL }
-
-FUNCTION_DECLARATION = { a_fx ~ IDENTIFIER ~ PARAMETER_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
+FUNCTION_DECLARATION = { a_pub? ~ a_fx ~ IDENTIFIER ~ PARAMETER_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
 PARAMETER_LIST       = { "(" ~ (PARAMETER ~ ("," ~ PARAMETER)*)* ~ ")" }
-PARAMETER            = { IDENTIFIER ~ TYPE }
+PARAMETER            = { (bitwise_and ~ a_self) | (IDENTIFIER ~ TYPE) }
 RETURN_TYPE          = { a_tilde ~ TYPE }
 RETURN_STMT          = { "return" ~ EXPRESSION ~ ";" }
 FUNCTION_BODY        = { "{" ~ STATEMENT* ~ RETURN_STMT? ~ "}" }
 
 FUNCTION_CALL  = { IDENTIFIER ~ ARGUMENTS_LIST }
 ARGUMENTS_LIST = { "(" ~ (ARGUMENT ~ ("," ~ ARGUMENT)*)? ~ ")" }
-ARGUMENT       = { EXPRESSION }
+ARGUMENT       = { bitwise_and? ~ EXPRESSION }
 
 CLOSURE = { "fx" ~ ARGUMENTS_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
 
-PROGRAM = { SOI ~ NEWLINE* ~ FUNCTION_DECLARATION* ~ NEWLINE* ~ EOI }
+PROGRAM_BLOCK = { (IMPORT_STMT | FUNCTION_DECLARATION | MODULE_DECLARATION | STRUCT_BLOCK | ENUM_BLOCK | IMPL_BLOCK)* }
+
+MODULE_DECLARATION = { a_pub? ~ a_mod ~ IDENTIFIER ~ MODULE_BLOCK }
+MODULE_BLOCK       = { "{" ~ PROGRAM_BLOCK ~ "}" }
+MODULE_ACCESS      = { IDENTIFIER ~ ("::" ~ (!FUNCTION_CALL ~ IDENTIFIER))* ~ ("::" ~ FUNCTION_CALL)? }
+
+IMPORT_STMT       = { a_import ~ IMPORT_IDENTIFIER ~ ("::" ~ IMPORT_IDENTIFIER)* ~ ("::" ~ multiply)? ~ ";" }
+IMPORT_IDENTIFIER = { IDENTIFIER | a_self | a_super }
+
+STRUCT_BLOCK = { a_struct ~ IDENTIFIER ~ "{" ~ STRUCT_FIELD* ~ "}" }
+STRUCT_FIELD = { IDENTIFIER ~ (TYPE | IDENTIFIER) ~ "," }
+
+ENUM_BLOCK   = { a_enum ~ IDENTIFIER ~ "{" ~ ENUM_VARIANT* ~ "}" }
+ENUM_VARIANT = { IDENTIFIER ~ ("(" ~ (TYPE | IDENTIFIER) ~ ")")? ~ "," }
+
+IMPL_BLOCK  = { a_impl ~ IDENTIFIER ~ "{" ~ IMPL_METHOD* ~ "}" }
+IMPL_METHOD = { FUNCTION_DECLARATION }
+
+PROGRAM = { SOI ~ NEWLINE* ~ PROGRAM_BLOCK ~ NEWLINE* ~ EOI }
