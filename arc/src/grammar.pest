@@ -1,88 +1,233 @@
-//! Grammar doc
-
-// SOME PEST RULES
-
-// 1. expression as many times as it can (matching "eagerly", or "greedily")
-// 2. In general, when writing a parser with choices, put the longest or most specific choice first,
-// and the shortest or most general choice last.
-// 3. In the rule first ~ second, once first parses successfully, it has consumed some characters
-// that will never come back. second can only run on the input that first did not consume.
-// 4. the famous "shift/reduce conflict" in LR parsers is not a problem in PEGs.
-// 5. Since rule names are translated into Rust enum variants, they are not allowed to be Rust keywords.
-// 6. Other numbers of repetitions can be indicated using curly brackets
-
-/* for add.arc */
-
-// Define the rules for whitespace
-// WHITESPACE = _{ " " | "\t" | "\n" }
-WS                = _{ " " }
+WHITESPACE        = _{ " " | "\n" }
 COMMENT           = _{ SingleLineComment | MultiLineComment }
-SingleLineComment =  { "//" ~ (!"\n" ~ ANY)* }
-MultiLineComment  =  { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+SingleLineComment = @{ "//" ~ (!"\n" ~ ANY)* }
+MultiLineComment  = @{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
-IDENTIFIER = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-KEYWORDS   = @{ "fx" | "as" | "let" | TYPE | "import" | "pub" | "mod" | "super" | "self" | "if" | "else" | "else if" | "while" | "for" | "in" | "continue" | "break" | "match" }
+IDENTIFIER = @{ !KEYWORD ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+// KEYWORD    = @{ "fx" | "let" | "mut" | "as" | TYPE | "import" | "pub" | "mod" | "super" | "self" | "if" | "else" | "else if" | "while" | "for" | "in" | "continue" | "break" | "match" | "impl" | "struct" | "enum" }
+KEYWORD     =  {
+    a_fx
+  | a_let
+  | a_mut
+  | a_as
+  | a_import
+  | a_pub
+  | a_mod
+  | a_super
+  | a_self
+  | a_if
+  | a_else
+  | a_while
+  | a_for
+  | a_in
+  | a_continue
+  | a_break
+  | a_match
+  | a_impl
+  | a_struct
+  | a_enum
+  | a_return
+  | a_result
+  | a_ok
+  | a_err
+  | a_type
+  | TYPE
+}
+a_fx        = _{ "fx" }
+a_tilde     = _{ "~" }
+a_let       =  { "let" }
+a_mut       =  { "mut" }
+a_import    =  { "import" }
+a_pub       =  { "pub" }
+a_mod       =  { "mod" }
+a_super     =  { "super" }
+a_self      =  { "self" }
+a_if        =  { "if" }
+a_else      =  { "else" }
+a_while     =  { "while" }
+a_for       =  { "for" }
+a_in        =  { "in" }
+a_continue  =  { "continue" }
+a_break     =  { "break" }
+a_match     =  { "match" }
+a_fat_arrow =  { "=>" }
+a_return    =  { "return" }
+a_result    =  { "result" }
+a_ok        =  { "ok" }
+a_err       =  { "err" }
+a_type      =  { "type" }
+a_as        =  { "as" }
+a_struct    =  { "struct" }
+a_enum      =  { "enum" }
+a_impl      =  { "impl" }
 
-// Define the rule for an integer literal
-INTEGER    = @{ ASCII_DIGIT+ }
-FLOAT      = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* }
-BOOL       = @{ "true" | "false" }
-TUPLE      =  { "(" ~ DATA_TYPES ~ ("," ~ WHITE_SPACE* ~ DATA_TYPES)* ~ ")" }
-DATA_TYPES =  { FLOAT | INTEGER | STRING | CHAR | BOOL | TUPLE | IDENTIFIER }
+INTEGER = @{ ("-")? ~ ASCII_DIGIT+ }
+FLOAT   = @{ INTEGER ~ "." ~ ASCII_DIGIT* }
+BOOL    = @{ "true" | "false" }
 
 STRING = @{ "\"" ~ (!("\"") ~ ANY)* ~ "\"" }
+CHAR   = @{ "'" ~ ANY ~ "'" }
 // CHAR = @{"'" ~ (!("'") ~ ASCII_ALPHA) ~ "'" }
-CHAR = { "'" ~ ANY ~ "'" }
 
-// Define the rule for a type
-TYPE = @{ "i32" | "i64" | "f32" | "f64" | "char" }
+TUPLE = { "(" ~ (EXPRESSION ~ ("," ~ EXPRESSION)*)? ~ ")" }
+ARRAY = { "[" ~ (EXPRESSION ~ ("," ~ EXPRESSION)*)? ~ "]" }
+LIST  = { "<" ~ (EXPRESSION ~ ("," ~ EXPRESSION)*)? ~ ">" }
 
-// Define the rule for a function parameter
-PARAMETER = { WHITE_SPACE* ~ IDENTIFIER ~ WHITE_SPACE+ ~ TYPE ~ WHITE_SPACE* }
+DATA_TYPES = { TUPLE | ARRAY | LIST | FLOAT | INTEGER | STRING | CHAR | BOOL | IDENTIFIER }
 
-// Define the rule for a function parameter list
-PARAMETER_LIST = { "(" ~ (PARAMETER ~ ("," ~ PARAMETER)*)* ~ ")" }
+TYPE       = { TUPLE_TYPE | ARRAY_TYPE | LIST_TYPE | "i32" | "i64" | "f32" | "f64" | "char" | "bool" }
+TUPLE_TYPE = { "(" ~ (TYPE ~ ("," ~ TYPE)*)? ~ ")" }
+ARRAY_TYPE = { "[" ~ TYPE ~ ";" ~ INTEGER ~ "]" }
+LIST_TYPE  = { "<" ~ TYPE ~ ">" }
 
-// Define the rule for a function return type
-RETURN_TYPE = { "~" ~ WHITE_SPACE* ~ TYPE }
+OPERATOR = {
+    OPERATOR_LEVEL_1
+  | OPERATOR_LEVEL_2
+  | OPERATOR_LEVEL_3
+  | OPERATOR_LEVEL_4
+  | OPERATOR_LEVEL_5
+  | OPERATOR_LEVEL_6
+  | OPERATOR_LEVEL_7
+  | OPERATOR_LEVEL_8
+  | OPERATOR_LEVEL_9
+  | OPERATOR_LEVEL_10
+}
 
-// Define the rule for a statement INCOMPLETE
+OPERATOR_LEVEL_1  = { multiply | divide | remainder }
+OPERATOR_LEVEL_2  = { add | subtract }
+OPERATOR_LEVEL_3  = { bitwise_shift }
+OPERATOR_LEVEL_4  = { bitwise_and }
+OPERATOR_LEVEL_5  = { bitwise_xor }
+OPERATOR_LEVEL_6  = { bitwise_or }
+OPERATOR_LEVEL_7  = { logical_and }
+OPERATOR_LEVEL_8  = { logical_or }
+OPERATOR_LEVEL_9  = { comparison }
+OPERATOR_LEVEL_10 = { ASSIGNMENT }
+
+multiply           = { "*" }
+divide             = { "/" }
+remainder          = { "%" }
+add                = { "+" }
+subtract           = { "-" }
+bitwise_shift      = { left_shift | right_shift }
+bitwise_and        = { "&" }
+bitwise_xor        = { "^" }
+bitwise_or         = { "|" }
+logical_and        = { "&&" }
+logical_or         = { "||" }
+comparison         = { equal | not_equal | greater_than_equal | less_than_equal | greater_than | less_than }
+equal              = { "==" }
+not_equal          = { "!=" }
+greater_than_equal = { ">=" }
+less_than_equal    = { "<=" }
+greater_than       = { ">" }
+less_than          = { "<" }
+ASSIGNMENT         = { assign | plus_assign | minus_assign | multiply_assign | divide_assign | remainder_assign }
+
+left_shift       = { "<<" }
+right_shift      = { ">>" }
+assign           = { "=" }
+plus_assign      = { "+=" }
+minus_assign     = { "-=" }
+multiply_assign  = { "*=" }
+divide_assign    = { "/=" }
+remainder_assign = { "%=" }
+
 STATEMENT = {
-    WHITE_SPACE* ~ "let" ~ WHITE_SPACE+ ~ IDENTIFIER ~ (WHITE_SPACE+ ~ TYPE)? ~ WHITE_SPACE* ~ "=" ~ WHITE_SPACE* ~ (FUNCTION_CALL | EXPRESSION) ~ WHITE_SPACE* ~ ";" ~ WHITE_SPACE*
-  | WHITE_SPACE* ~ FUNCTION_CALL ~ ";"
+    a_let? ~ a_mut? ~ IDENTIFIER ~ TYPE? ~ ASSIGNMENT ~ (CLOSURE | FUNCTION_CALL | EXPRESSION) ~ ";"
+  | (FUNCTION_CALL | IMPL_ACCESS) ~ ";"
+  | IF_STATEMENT
+  | MATCH_STATEMENT
+  | FOR_LOOP
+  | WHILE_LOOP
 }
 
-// Define the rule for an expression
-EXPRESSION = { WHITE_SPACE* ~ TERM ~ WHITE_SPACE* ~ (WHITE_SPACE* ~ ("+" | "-") ~ WHITE_SPACE* ~ TERM)* }
+IF_STATEMENT = {
+    "if" ~ EXPRESSION ~ BLOCK ~ ELSE_IF_STATEMENT* ~ ELSE_BLOCK?
+}
 
-// Define the rule for a term
-TERM = { FACTOR ~ (WHITE_SPACE* ~ ("*" | "/") ~ WHITE_SPACE* ~ FACTOR)* }
+ELSE_IF_STATEMENT = {
+    "else" ~ "if" ~ EXPRESSION ~ BLOCK
+}
 
-// Define the rule for a factor
-FACTOR = {
+ELSE_BLOCK = {
+    "else" ~ BLOCK
+}
+
+BLOCK = {
+    "{" ~ STATEMENT* ~ "}"
+}
+
+MATCH_STATEMENT = {
+    "match" ~ EXPRESSION ~ "{" ~ MATCH_CASE* ~ "}"
+}
+
+MATCH_CASE = {
+    EXPRESSION ~ "=>" ~ EXPRESSION ~ ","
+}
+
+FOR_LOOP = {
+    "for" ~ IDENTIFIER ~ "in" ~ RANGE ~ BLOCK
+}
+
+RANGE = {
+    EXPRESSION ~ ".." ~ EXPRESSION
+}
+
+WHILE_LOOP = {
+    "while" ~ EXPRESSION ~ BLOCK
+}
+
+// EXPRESSION = { TERM ~ (("+" | "-") ~ TERM)* }
+// TERM       = { FACTOR ~ (("*" | "/") ~ FACTOR)* }
+EXPRESSION = { FACTOR ~ (OPERATOR ~ FACTOR)* }
+FACTOR     = {
     TUPLE_ACCESS
-  | (DATA_TYPES ~ (WHITE_SPACE+ ~ "as" ~ WHITE_SPACE+ ~ TYPE)?)
-  | ("(" ~ WHITE_SPACE* ~ EXPRESSION ~ WHITE_SPACE* ~ ")")
+  | ARRAY_ACCESS
+  | LIST_ACCESS
+  | IMPL_ACCESS
+  | DATA_TYPES ~ (a_as ~ TYPE)?
+  | ("(" ~ EXPRESSION ~ ")")
 }
+
+/*
+    let a = match a {
+    1 => 1,
+    2 => 2,
+    _ => 3
+    }
+
+    let b = if a == 1 {
+    1
+    } else if a == 2 {
+    2
+    } else {
+    3
+    }
+
+    let mut c = 0;
+    if a > b {
+    c = a;
+    } else {
+    c = b;
+*/
 
 TUPLE_ACCESS = { IDENTIFIER ~ "." ~ INTEGER }
+ARRAY_ACCESS = { IDENTIFIER ~ "[" ~ (IDENTIFIER | INTEGER) ~ "]" }
+LIST_ACCESS  = { IDENTIFIER ~ "[" ~ (IDENTIFIER | INTEGER) ~ "]" }
+IMPL_ACCESS  = { IDENTIFIER ~ "." ~ FUNCTION_CALL }
 
-// Define the rule for a function body
-FUNCTION_BODY = { "{" ~ STATEMENT* ~ ("return" ~ WHITE_SPACE+ ~ IDENTIFIER ~ WHITE_SPACE* ~ ";")? ~ WHITE_SPACE* ~ "}" }
+FUNCTION_DECLARATION = { a_fx ~ IDENTIFIER ~ PARAMETER_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
+PARAMETER_LIST       = { "(" ~ (PARAMETER ~ ("," ~ PARAMETER)*)* ~ ")" }
+PARAMETER            = { IDENTIFIER ~ TYPE }
+RETURN_TYPE          = { a_tilde ~ TYPE }
+RETURN_STMT          = { "return" ~ EXPRESSION ~ ";" }
+FUNCTION_BODY        = { "{" ~ STATEMENT* ~ RETURN_STMT? ~ "}" }
 
-// Define the rule for a function declaration
-FUNCTION_DECLARATION = { "fx" ~ WHITE_SPACE+ ~ IDENTIFIER ~ PARAMETER_LIST ~ WHITE_SPACE* ~ RETURN_TYPE? ~ WHITE_SPACE* ~ FUNCTION_BODY }
+FUNCTION_CALL  = { IDENTIFIER ~ ARGUMENTS_LIST }
+ARGUMENTS_LIST = { "(" ~ (ARGUMENT ~ ("," ~ ARGUMENT)*)? ~ ")" }
+ARGUMENT       = { EXPRESSION }
 
-// Define the rule for a function call
-FUNCTION_CALL = { IDENTIFIER ~ ARGUMENTS_LIST }
+CLOSURE = { "fx" ~ ARGUMENTS_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
 
-// Define the rule for the arguments list
-ARGUMENTS_LIST = { "(" ~ (ARGUMENT ~ ("," ~ ARGUMENT)*)* ~ ")" }
-
-// Define the rule for an argument
-ARGUMENT = { EXPRESSION }
-
-// Define the top-level rule for a program
-PROGRAM = { SOI ~ (FUNCTION_DECLARATION ~ WHITE_SPACE*)* ~ EOI }
-
-/* for basic_types.arc */
+PROGRAM = { SOI ~ NEWLINE* ~ FUNCTION_DECLARATION* ~ NEWLINE* ~ EOI }

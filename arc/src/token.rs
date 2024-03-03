@@ -146,7 +146,7 @@ impl Token {
             "as" => Token::As,
             "struct" => Token::Struct,
             "enum" => Token::Enum,
-            "impl " => Token::Impl,
+            "impl" => Token::Impl,
 
             // arithmetic operators
             "+" => Token::Plus,
