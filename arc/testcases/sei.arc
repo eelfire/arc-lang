@@ -1,14 +1,14 @@
 struct StructName {
-    field1 i64,
-    field2 i64,
-    field3 i32,
-    field4 SomeStruct,
-    field5 SomeEnum,
+    field1: i64,
+    field2: i64,
+    field3: i32,
+    field4: SomeStruct,
+    field5: SomeEnum,
 }
 
 struct SomeStruct {
-    one i64,
-    two f64,
+    one: i64,
+    two: f64,
 }
 
 enum EnumName {

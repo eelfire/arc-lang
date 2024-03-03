@@ -3,8 +3,9 @@ COMMENT           = _{ SingleLineComment | MultiLineComment }
 SingleLineComment = @{ "//" ~ (!"\n" ~ ANY)* }
 MultiLineComment  = @{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
-IDENTIFIER = @{ !(KEYWORD ~ !ASCII_ALPHANUMERIC) ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-KEYWORD    =  {
+IDENT_CHARS =  { ASCII_ALPHANUMERIC | "_" }
+IDENTIFIER  = @{ !(KEYWORD ~ !ASCII_ALPHANUMERIC) ~ (ASCII_ALPHA ~ IDENT_CHARS* | ("_" ~ IDENT_CHARS+)) }
+KEYWORD     =  {
     a_fx
   | a_let
   | a_mut
@@ -61,7 +62,7 @@ a_struct    =  { "struct" }
 a_enum      =  { "enum" }
 a_impl      =  { "impl" }
 
-INTEGER = @{ ("-")? ~ ASCII_DIGIT+ }
+INTEGER = @{ ("-" | "0b" | "0o" | "0x")? ~ ("_")? ~ ASCII_DIGIT ~ (ASCII_DIGIT | "_")* }
 FLOAT   = @{ INTEGER ~ "." ~ ASCII_DIGIT* }
 BOOL    = @{ "true" | "false" }
 
@@ -75,10 +76,11 @@ LIST  = { "<" ~ (EXPRESSION ~ ("," ~ EXPRESSION)*)? ~ ">" }
 
 DATA_TYPES = { TUPLE | ARRAY | LIST | FLOAT | INTEGER | STRING | CHAR | BOOL | IDENTIFIER }
 
-TYPE       = { TUPLE_TYPE | ARRAY_TYPE | LIST_TYPE | "i32" | "i64" | "f32" | "f64" | "char" | "bool" }
-TUPLE_TYPE = { "(" ~ (TYPE ~ ("," ~ TYPE)*)? ~ ")" }
-ARRAY_TYPE = { "[" ~ TYPE ~ ";" ~ INTEGER ~ "]" }
-LIST_TYPE  = { "<" ~ TYPE ~ ">" }
+TYPE        = { TUPLE_TYPE | ARRAY_TYPE | LIST_TYPE | RESULT_TYPE | "i32" | "i64" | "f32" | "f64" | "char" | "bool" }
+TUPLE_TYPE  = { "(" ~ (TYPE ~ ("," ~ TYPE)*)? ~ ")" }
+ARRAY_TYPE  = { "[" ~ TYPE ~ ";" ~ INTEGER ~ "]" }
+LIST_TYPE   = { "<" ~ TYPE ~ ">" }
+RESULT_TYPE = { ("result<" | "Result<") ~ (TYPE | IDENTIFIER) ~ "," ~ (TYPE | IDENTIFIER) ~ ">" }
 
 OPERATOR = {
     OPERATOR_LEVEL_1
@@ -109,12 +111,11 @@ divide             = { "/" }
 remainder          = { "%" }
 add                = { "+" }
 subtract           = { "-" }
-bitwise_shift      = { left_shift | right_shift }
-bitwise_and        = { "&" }
-bitwise_xor        = { "^" }
-bitwise_or         = { "|" }
+unary_plus         = { "++" }
+unary_minus        = { "--" }
 logical_and        = { "&&" }
 logical_or         = { "||" }
+logical_not        = { "!" }
 comparison         = { equal | not_equal | greater_than_equal | less_than_equal | greater_than | less_than }
 equal              = { "==" }
 not_equal          = { "!=" }
@@ -122,34 +123,50 @@ greater_than_equal = { ">=" }
 less_than_equal    = { "<=" }
 greater_than       = { ">" }
 less_than          = { "<" }
-ASSIGNMENT         = { assign | plus_assign | minus_assign | multiply_assign | divide_assign | remainder_assign }
 
-left_shift       = { "<<" }
-right_shift      = { ">>" }
-assign           = { "=" }
-plus_assign      = { "+=" }
-minus_assign     = { "-=" }
-multiply_assign  = { "*=" }
-divide_assign    = { "/=" }
-remainder_assign = { "%=" }
+ASSIGNMENT                 = { assign | plus_assign | minus_assign | multiply_assign | divide_assign | remainder_assign | bitwise_and_assign | bitwise_or_assign | bitwise_xor_assign | bitwise_left_shift_assign | bitwise_right_shift_assign }
+assign                     = { "=" }
+plus_assign                = { "+=" }
+minus_assign               = { "-=" }
+multiply_assign            = { "*=" }
+divide_assign              = { "/=" }
+remainder_assign           = { "%=" }
+bitwise_and_assign         = { "&=" }
+bitwise_or_assign          = { "|=" }
+bitwise_xor_assign         = { "^=" }
+bitwise_left_shift_assign  = { "<<=" }
+bitwise_right_shift_assign = { ">>=" }
+
+bitwise_shift = { left_shift | right_shift }
+bitwise_not   = { "!" }
+bitwise_and   = { "&" }
+bitwise_xor   = { "^" }
+bitwise_or    = { "|" }
+left_shift    = { "<<" }
+right_shift   = { ">>" }
 
 STATEMENT = {
-    a_let? ~ a_mut? ~ IDENTIFIER ~ TYPE? ~ ASSIGNMENT ~ (CLOSURE | FUNCTION_CALL | EXPRESSION) ~ ";"
+    a_let? ~ a_mut? ~ IDENTIFIER ~ TYPE? ~ ASSIGNMENT ~ (CLOSURE | FUNCTION_CALL | MODULE_ACCESS | IF_STATEMENT | MATCH_STATEMENT | EXPRESSION | EXP_BLOCK) ~ ";"
   | (FUNCTION_CALL | IMPL_ACCESS | MODULE_ACCESS) ~ ";"
+  | BREAK_STMT
   | IF_STATEMENT
   | MATCH_STATEMENT
   | FOR_LOOP
   | WHILE_LOOP
 }
 
-IF_STATEMENT      = { "if" ~ EXPRESSION ~ BLOCK ~ ELSE_IF_STATEMENT* ~ ELSE_BLOCK? }
-ELSE_IF_STATEMENT = { "else" ~ "if" ~ EXPRESSION ~ BLOCK }
-ELSE_BLOCK        = { "else" ~ BLOCK }
+BREAK_STMT = { a_break ~ ";" }
 
-BLOCK = { "{" ~ STATEMENT* ~ "}" }
+IF_STATEMENT      = { "if" ~ EXPRESSION ~ EXP_BLOCK ~ ELSE_IF_STATEMENT* ~ ELSE_BLOCK? }
+ELSE_IF_STATEMENT = { "else" ~ "if" ~ EXPRESSION ~ EXP_BLOCK }
+ELSE_BLOCK        = { "else" ~ EXP_BLOCK }
 
-MATCH_STATEMENT = { "match" ~ EXPRESSION ~ "{" ~ MATCH_CASE* ~ "}" }
+EXP_BLOCK = { "{" ~ STATEMENT* ~ (EXPRESSION | RETURN_STMT)? ~ "}" }
+BLOCK     = { "{" ~ STATEMENT* ~ (RETURN_STMT)? ~ "}" }
+
+MATCH_STATEMENT = { "match" ~ EXPRESSION ~ "{" ~ MATCH_CASE* ~ MATCH_DEFAULT? ~ "}" }
 MATCH_CASE      = { EXPRESSION ~ a_fat_arrow ~ EXPRESSION ~ "," }
+MATCH_DEFAULT   = { "_" ~ a_fat_arrow ~ EXPRESSION ~ "," }
 
 FOR_LOOP = { "for" ~ IDENTIFIER ~ "in" ~ RANGE ~ BLOCK }
 RANGE    = { EXPRESSION ~ ".." ~ EXPRESSION }
@@ -160,14 +177,7 @@ WHILE_LOOP = { "while" ~ EXPRESSION ~ BLOCK }
 // TERM       = { FACTOR ~ (("*" | "/") ~ FACTOR)* }
 EXPRESSION = { FACTOR ~ (OPERATOR ~ FACTOR)* }
 FACTOR     = {
-    TUPLE_ACCESS
-  | ARRAY_ACCESS
-  | LIST_ACCESS
-  | IMPL_ACCESS
-  | MODULE_ACCESS
-  | STRUCT_ENUM_ACCESS
-  | DATA_TYPES ~ (a_as ~ TYPE)?
-  | ("(" ~ EXPRESSION ~ ")")
+    (bitwise_not | subtract)? ~ (TUPLE_ACCESS | ARRAY_ACCESS | LIST_ACCESS | IMPL_ACCESS | MODULE_ACCESS | STRUCT_ENUM_ACCESS | FUNCTION_CALL | ERROR_CHECK | DATA_TYPES ~ (a_as ~ TYPE)? | ("(" ~ EXPRESSION ~ ")"))
 }
 
 TUPLE_ACCESS       = { IDENTIFIER ~ "." ~ INTEGER }
@@ -178,28 +188,28 @@ STRUCT_ENUM_ACCESS = { (IDENTIFIER | a_self) ~ "." ~ IDENTIFIER }
 
 FUNCTION_DECLARATION = { a_pub? ~ a_fx ~ IDENTIFIER ~ PARAMETER_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
 PARAMETER_LIST       = { "(" ~ (PARAMETER ~ ("," ~ PARAMETER)*)* ~ ")" }
-PARAMETER            = { (bitwise_and ~ a_self) | (IDENTIFIER ~ TYPE) }
+PARAMETER            = { (bitwise_and ~ a_self) | (IDENTIFIER ~ (TYPE | IDENTIFIER)) }
 RETURN_TYPE          = { a_tilde ~ TYPE }
 RETURN_STMT          = { "return" ~ EXPRESSION ~ ";" }
 FUNCTION_BODY        = { "{" ~ STATEMENT* ~ RETURN_STMT? ~ "}" }
 
-FUNCTION_CALL  = { IDENTIFIER ~ ARGUMENTS_LIST }
+FUNCTION_CALL  = { (IDENTIFIER | a_err | a_ok) ~ ARGUMENTS_LIST }
 ARGUMENTS_LIST = { "(" ~ (ARGUMENT ~ ("," ~ ARGUMENT)*)? ~ ")" }
 ARGUMENT       = { bitwise_and? ~ EXPRESSION }
 
-CLOSURE = { "fx" ~ ARGUMENTS_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
+ERROR_CHECK = { a_let ~ (a_ok | a_err) ~ ARGUMENTS_LIST }
 
-PROGRAM_BLOCK = { (IMPORT_STMT | FUNCTION_DECLARATION | MODULE_DECLARATION | STRUCT_BLOCK | ENUM_BLOCK | IMPL_BLOCK)* }
+CLOSURE = { "fx" ~ ARGUMENTS_LIST ~ RETURN_TYPE? ~ EXP_BLOCK }
 
 MODULE_DECLARATION = { a_pub? ~ a_mod ~ IDENTIFIER ~ MODULE_BLOCK }
 MODULE_BLOCK       = { "{" ~ PROGRAM_BLOCK ~ "}" }
-MODULE_ACCESS      = { IDENTIFIER ~ ("::" ~ (!FUNCTION_CALL ~ IDENTIFIER))* ~ ("::" ~ FUNCTION_CALL)? }
+MODULE_ACCESS      = { IDENTIFIER ~ "::" ~ (FUNCTION_CALL | (IDENTIFIER ~ ("::" ~ IDENTIFIER)* ~ ("::" ~ FUNCTION_CALL)?)) }
 
 IMPORT_STMT       = { a_import ~ IMPORT_IDENTIFIER ~ ("::" ~ IMPORT_IDENTIFIER)* ~ ("::" ~ multiply)? ~ ";" }
-IMPORT_IDENTIFIER = { IDENTIFIER | a_self | a_super }
+IMPORT_IDENTIFIER = { a_self | a_super | IDENTIFIER }
 
 STRUCT_BLOCK = { a_struct ~ IDENTIFIER ~ "{" ~ STRUCT_FIELD* ~ "}" }
-STRUCT_FIELD = { IDENTIFIER ~ (TYPE | IDENTIFIER) ~ "," }
+STRUCT_FIELD = { IDENTIFIER ~ ":" ~ (TYPE | IDENTIFIER) ~ "," }
 
 ENUM_BLOCK   = { a_enum ~ IDENTIFIER ~ "{" ~ ENUM_VARIANT* ~ "}" }
 ENUM_VARIANT = { IDENTIFIER ~ ("(" ~ (TYPE | IDENTIFIER) ~ ")")? ~ "," }
@@ -207,4 +217,5 @@ ENUM_VARIANT = { IDENTIFIER ~ ("(" ~ (TYPE | IDENTIFIER) ~ ")")? ~ "," }
 IMPL_BLOCK  = { a_impl ~ IDENTIFIER ~ "{" ~ IMPL_METHOD* ~ "}" }
 IMPL_METHOD = { FUNCTION_DECLARATION }
 
-PROGRAM = { SOI ~ NEWLINE* ~ PROGRAM_BLOCK ~ NEWLINE* ~ EOI }
+PROGRAM_BLOCK = { (IMPORT_STMT | MODULE_DECLARATION | STRUCT_BLOCK | ENUM_BLOCK | IMPL_BLOCK | FUNCTION_DECLARATION)* }
+PROGRAM       = { SOI ~ NEWLINE* ~ PROGRAM_BLOCK ~ NEWLINE* ~ EOI }

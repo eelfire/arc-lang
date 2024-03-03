@@ -154,17 +154,13 @@ impl Token {
             "*" => Token::Star,
             "/" => Token::Slash,
             "%" => Token::Percent,
+            "++" => Token::UnaryPlus,
+            "--" => Token::UnaryMinus,
 
             // logical operators
             "&&" => Token::LogicalAnd,
             "||" => Token::LogicalOr,
             "!" => Token::LogicalNot,
-            "&" => Token::BitwiseAnd,
-            "|" => Token::BitwiseOr,
-            "`" => Token::BitwiseNot,
-            "^" => Token::BitwiseXor,
-            "<<" => Token::BitwiseLeftShift,
-            ">>" => Token::BitwiseRightShift,
 
             // comparison operators
             "==" => Token::Eq,
@@ -172,6 +168,7 @@ impl Token {
             // ">" => Token::Gt,
             // "<" => Token::Lt,
             ">=" => Token::Gte,
+            "<=" => Token::Lte,
 
             // assignment operators
             "=" => Token::Assign,
@@ -180,6 +177,19 @@ impl Token {
             "*=" => Token::StarAssign,
             "/=" => Token::SlashAssign,
             "%=" => Token::PercentAssign,
+            "&=" => Token::BitwiseAndAssign,
+            "|=" => Token::BitwiseOrAssign,
+            "^=" => Token::BitwiseXorAssign,
+            "<<=" => Token::BitwiseLeftShiftAssign,
+            ">>=" => Token::BitwiseRightShiftAssign,
+
+            // bitwise operators
+            // "`" => Token::BitwiseNot,
+            "&" => Token::BitwiseAnd,
+            "|" => Token::BitwiseOr,
+            "^" => Token::BitwiseXor,
+            "<<" => Token::BitwiseLeftShift,
+            ">>" => Token::BitwiseRightShift,
 
             // literals
             "true" => Token::Bool(true),

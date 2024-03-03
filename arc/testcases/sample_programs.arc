@@ -42,7 +42,7 @@ fx main() {
 
 fx main() {
   let mut x = 0;
-  for x != 42 {
+  while x != 42 {
     x += 1;
   }
   print("x is {}", x);

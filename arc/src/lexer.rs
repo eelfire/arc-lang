@@ -3,11 +3,12 @@ use std::path::Path;
 use crate::token::Token;
 
 pub fn run(input_file: &str) -> Vec<Token> {
-    println!("Lexing Stage Initiated...");
-
     // read chars from utf-8 encoded file
     let path = Path::new(input_file);
-    let contents = std::fs::read_to_string(path).expect("failed to read file");
+    let contents = std::fs::read_to_string(path)
+        .expect("The given file should be available and readable by the current user");
+
+    println!("Lexing Stage Initiated...");
 
     let mut tokens = Vec::new();
     let mut token = String::new();
