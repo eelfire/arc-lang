@@ -1,9 +1,9 @@
 mod module_name {
     fx a_function() {
-        statement1;
+        let a = 1;
     }
 
-    pub fx b_function() ~ u32 {
+    pub fx b_function() ~ i32 {
         return 11;
     }
 
