@@ -3,7 +3,7 @@
 // support for unicode characters
 fx main() {
     let x = 12; // by default this is i32
-    let a = 12 as u8;
+    let a = 12 as i32;
     let b = 4.3; // by default this is f64
     let c = b as f32;
     let d = 'r'; // unicode character
@@ -19,11 +19,11 @@ fx main() {
 
 // use of as keyword
 fx main() {
-  let a u8 = 13;
-  let b u32 = 7;
-  let c = (a as u32) + b;
+  let a i32 = 13;
+  let b i32 = 7;
+  let c = (a as i32) + b;
   print("{}", c);
 
   let t = true;
-  print("{}", t as u8);
+  print("{}", t as i32);
 }

@@ -1,0 +1,88 @@
+//! Grammar doc
+
+// SOME PEST RULES
+
+// 1. expression as many times as it can (matching "eagerly", or "greedily")
+// 2. In general, when writing a parser with choices, put the longest or most specific choice first,
+// and the shortest or most general choice last.
+// 3. In the rule first ~ second, once first parses successfully, it has consumed some characters
+// that will never come back. second can only run on the input that first did not consume.
+// 4. the famous "shift/reduce conflict" in LR parsers is not a problem in PEGs.
+// 5. Since rule names are translated into Rust enum variants, they are not allowed to be Rust keywords.
+// 6. Other numbers of repetitions can be indicated using curly brackets
+
+/* for add.arc */
+
+// Define the rules for whitespace
+// WHITESPACE = _{ " " | "\t" | "\n" }
+WS                = _{ " " }
+COMMENT           = _{ SingleLineComment | MultiLineComment }
+SingleLineComment =  { "//" ~ (!"\n" ~ ANY)* }
+MultiLineComment  =  { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+IDENTIFIER = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+KEYWORDS   = @{ "fx" | "as" | "let" | TYPE | "import" | "pub" | "mod" | "super" | "self" | "if" | "else" | "else if" | "while" | "for" | "in" | "continue" | "break" | "match" }
+
+// Define the rule for an integer literal
+INTEGER    = @{ ASCII_DIGIT+ }
+FLOAT      = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* }
+BOOL       = @{ "true" | "false" }
+TUPLE      =  { "(" ~ DATA_TYPES ~ ("," ~ WHITE_SPACE* ~ DATA_TYPES)* ~ ")" }
+DATA_TYPES =  { FLOAT | INTEGER | STRING | CHAR | BOOL | TUPLE | IDENTIFIER }
+
+STRING = @{ "\"" ~ (!("\"") ~ ANY)* ~ "\"" }
+// CHAR = @{"'" ~ (!("'") ~ ASCII_ALPHA) ~ "'" }
+CHAR = { "'" ~ ANY ~ "'" }
+
+// Define the rule for a type
+TYPE = @{ "i32" | "i64" | "f32" | "f64" | "char" }
+
+// Define the rule for a function parameter
+PARAMETER = { WHITE_SPACE* ~ IDENTIFIER ~ WHITE_SPACE+ ~ TYPE ~ WHITE_SPACE* }
+
+// Define the rule for a function parameter list
+PARAMETER_LIST = { "(" ~ (PARAMETER ~ ("," ~ PARAMETER)*)* ~ ")" }
+
+// Define the rule for a function return type
+RETURN_TYPE = { "~" ~ WHITE_SPACE* ~ TYPE }
+
+// Define the rule for a statement INCOMPLETE
+STATEMENT = {
+    WHITE_SPACE* ~ "let" ~ WHITE_SPACE+ ~ IDENTIFIER ~ (WHITE_SPACE+ ~ TYPE)? ~ WHITE_SPACE* ~ "=" ~ WHITE_SPACE* ~ (FUNCTION_CALL | EXPRESSION) ~ WHITE_SPACE* ~ ";" ~ WHITE_SPACE*
+  | WHITE_SPACE* ~ FUNCTION_CALL ~ ";"
+}
+
+// Define the rule for an expression
+EXPRESSION = { WHITE_SPACE* ~ TERM ~ WHITE_SPACE* ~ (WHITE_SPACE* ~ ("+" | "-") ~ WHITE_SPACE* ~ TERM)* }
+
+// Define the rule for a term
+TERM = { FACTOR ~ (WHITE_SPACE* ~ ("*" | "/") ~ WHITE_SPACE* ~ FACTOR)* }
+
+// Define the rule for a factor
+FACTOR = {
+    TUPLE_ACCESS
+  | (DATA_TYPES ~ (WHITE_SPACE+ ~ "as" ~ WHITE_SPACE+ ~ TYPE)?)
+  | ("(" ~ WHITE_SPACE* ~ EXPRESSION ~ WHITE_SPACE* ~ ")")
+}
+
+TUPLE_ACCESS = { IDENTIFIER ~ "." ~ INTEGER }
+
+// Define the rule for a function body
+FUNCTION_BODY = { "{" ~ STATEMENT* ~ ("return" ~ WHITE_SPACE+ ~ IDENTIFIER ~ WHITE_SPACE* ~ ";")? ~ WHITE_SPACE* ~ "}" }
+
+// Define the rule for a function declaration
+FUNCTION_DECLARATION = { "fx" ~ WHITE_SPACE+ ~ IDENTIFIER ~ PARAMETER_LIST ~ WHITE_SPACE* ~ RETURN_TYPE? ~ WHITE_SPACE* ~ FUNCTION_BODY }
+
+// Define the rule for a function call
+FUNCTION_CALL = { IDENTIFIER ~ ARGUMENTS_LIST }
+
+// Define the rule for the arguments list
+ARGUMENTS_LIST = { "(" ~ (ARGUMENT ~ ("," ~ ARGUMENT)*)* ~ ")" }
+
+// Define the rule for an argument
+ARGUMENT = { EXPRESSION }
+
+// Define the top-level rule for a program
+PROGRAM = { SOI ~ (FUNCTION_DECLARATION ~ WHITE_SPACE*)* ~ EOI }
+
+/* for basic_types.arc */
