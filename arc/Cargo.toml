@@ -8,3 +8,15 @@ edition = "2021"
 [dependencies]
 pest = "2.7.8"
 pest_derive = "2.7.8"
+
+# ADDED BY MITHIL JUST FOR FUN!!! TO BE REMOVED.
+
+[package.metadata.docs.rs]
+all-features = true
+
+[[bin]]
+name = "arcc"
+path = "src/main.rs"
+
+[package.metadata.'cargo-make']
+aliases = {"run" = "arcc"}
