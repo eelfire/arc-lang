@@ -1,4 +1,4 @@
-WHITESPACE        = _{ " " | "\n" }
+WHITESPACE        = _{ " " | "\n" | "\r" }
 COMMENT           = _{ SingleLineComment | MultiLineComment }
 SingleLineComment = @{ "//" ~ (!"\n" ~ ANY)* }
 MultiLineComment  = @{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
