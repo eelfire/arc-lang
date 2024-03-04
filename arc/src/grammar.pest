@@ -76,7 +76,7 @@ LIST  = { "<" ~ (EXPRESSION ~ ("," ~ EXPRESSION)*)? ~ ">" }
 
 DATA_TYPES = { TUPLE | ARRAY | LIST | FLOAT | INTEGER | STRING | CHAR | BOOL | IDENTIFIER }
 
-TYPE        = { TUPLE_TYPE | ARRAY_TYPE | LIST_TYPE | RESULT_TYPE | "i32" | "i64" | "f32" | "f64" | "char" | "bool" }
+TYPE        = { TUPLE_TYPE | ARRAY_TYPE | LIST_TYPE | RESULT_TYPE | "i32" | "i64" | "f32" | "f64" | "char" | "bool" | "string" }
 TUPLE_TYPE  = { "(" ~ (TYPE ~ ("," ~ TYPE)*)? ~ ")" }
 ARRAY_TYPE  = { "[" ~ TYPE ~ ";" ~ INTEGER ~ "]" }
 LIST_TYPE   = { "<" ~ TYPE ~ ">" }

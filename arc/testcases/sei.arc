@@ -24,7 +24,7 @@ impl SomeStruct {
     }
 }
 
-impl string {
+impl strings {
     fx len(&self) ~ i32 {
         let a = 1;
         return length;
