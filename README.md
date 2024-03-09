@@ -28,11 +28,11 @@
 - We build a PEG parser for the language. The grammar can be found in the file named `grammar.pest`. It is written using `pest`.
 - To run the compiler until this stage, do the following:
 - #### Build
-  ```rust
+  ```rs
   cargo build
   ```
   #### Run
-  ```rust
+  ```rs
   cargo run <path to the .arc source code file>
   ```
   #### Example
