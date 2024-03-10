@@ -38,3 +38,11 @@
   #### Example
   ![parsed_op](https://github.com/IITGN-CS327-2024/our-own-compiler-arc-lang/assets/119656326/07e2a7d6-6ed8-4b2e-a2e8-6d13d7cc7a6f)
 
+- To run all the testcases use the following command:
+  ```shell
+  ./run_tests.sh
+  ```
+
+### Assignment 5
+
+- We build an AST (Abstract Syntax Tree) for the language. Before that we first finalze the design by drawing the classes of the AST. One can find it in `AST_Classes.pdf`.  
