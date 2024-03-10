@@ -1,0 +1,98 @@
+@startuml arc-ast
+
+/'
+abstract class Node {
+    +children: Node[]
+}
+'/
+
+
+abstract class Program {
+    +imports: ImportStmt[]
+    +modules: ModuleDeclaration[]
+    +structs: StructBlock[]
+    +enums: EnumBlock[]
+    +impls: ImplBlock[]
+    +functions: FunctionDeclaration[]
+}
+
+class ImportStmt {
+    +identifier: ImportIdentifier
+}
+
+class ModuleDeclaration {
+    +identifier: Identifier
+    +block: ModuleBlock
+}
+
+class ModuleBlock {
+    +statements: Statement[]
+}
+
+class StructBlock {
+    +identifier: Identifier
+    +fields: StructField[]
+}
+
+class EnumBlock {
+    +identifier: Identifier
+    +variants: EnumVariant[]
+}
+
+class ImplBlock {
+    +identifier: Identifier
+    +methods: ImplMethod[]
+}
+
+class ImplMethod {
+    +identifier: Identifier
+    +parameters: Parameter[]
+    +returnType: ReturnType
+    +body: FunctionBody
+}
+
+class FunctionDeclaration {
+    +identifier: Identifier
+    +parameters: Parameter[]
+    +returnType: ReturnType
+    +body: FunctionBody
+}
+
+class FunctionBody {
+    +statements: Statement[]
+}
+
+class Statement {
+    +expression: Expression
+}
+
+class Expression {
+    +operator: Operator
+    +operands: Factor[]
+}
+
+class Factor {
+    +value: any
+}
+
+Program --> ImportStmt
+Program --> ModuleDeclaration
+Program --> StructBlock
+Program --> EnumBlock
+Program --> ImplBlock
+Program --> FunctionDeclaration
+ModuleDeclaration --> ModuleBlock
+ModuleBlock --> Program
+StructBlock --> StructField
+EnumBlock --> EnumVariant
+ImplBlock --> ImplMethod
+ImplMethod --> FunctionDeclaration
+FunctionDeclaration --> Parameter
+FunctionDeclaration --> ReturnType
+FunctionDeclaration --> FunctionBody
+FunctionBody --> Statement
+Statement --> Expression
+Expression --> Operator
+Expression --> Factor
+
+@enduml
