@@ -1,3 +1,4 @@
+/'
 @startuml arc-ast
 
 /'
@@ -95,4 +96,119 @@ Statement --> Expression
 Expression --> Operator
 Expression --> Factor
 
+@enduml
+'/
+
+@startuml
+/'
+abstract class Node {
+    +children: Node[]
+}
+'/
+
+
+abstract class Program {
+    +imports: ImportStmt[]
+    +modules: ModuleDeclaration[]
+    +structs: StructBlock[]
+    +enums: EnumBlock[]
+    +impls: ImplBlock[]
+    +functions: FunctionDeclaration[]
+}
+
+class ImportStmt {
+    +identifier: ImportIdentifier
+}
+
+class ModuleDeclaration {
+    +identifier: Identifier
+    +block: ModuleBlock
+}
+
+class ModuleBlock {
+    +statements: Program /' MITHIL CHANGED THIS '/
+}
+
+class StructBlock {
+    +identifier: Identifier
+    +fields: StructField[]
+}
+
+class StructField {
+    +identifier: Identifier
+}
+
+class EnumBlock {
+    +identifier: Identifier
+    +variants: EnumVariant[]
+}
+
+class EnumVariant {
+    +identifier: Identifier
+}
+
+class ImplBlock {
+    +identifier: Identifier
+    +methods: ImplMethod[]
+}
+
+class ImplMethod {
+    +identifier: Identifier
+    +parameters: Parameter[]
+    +returnType: ReturnType
+    +body: FunctionBody
+}
+
+class FunctionDeclaration {
+    +identifier: Identifier
+    +parameters: Parameter[]
+    +returnStmt: ReturnType
+    +body: FunctionBody
+}
+
+class Parameter {
+    +identifer: Identifier
+    +value: Integer | Char | Float | Iterable
+}
+
+class FunctionBody {
+    +statements: Statement[]
+}
+
+class Statement {
+    +expression: Expression
+}
+
+class Expression {
+    +operator: Operator
+    +operands: Factor[]
+}
+
+class Factor {
+    +value: Any Statement
+}
+
+class Operator {
+    +type: binary | unary
+}
+
+Program --> ImportStmt
+Program --> ModuleDeclaration
+Program --> StructBlock
+Program --> EnumBlock
+Program --> ImplBlock
+Program --> FunctionDeclaration
+ModuleDeclaration --> ModuleBlock
+ModuleBlock --> Program
+StructBlock --> StructField
+EnumBlock --> EnumVariant
+ImplBlock --> ImplMethod
+ImplMethod --> FunctionDeclaration
+FunctionDeclaration --> Parameter
+FunctionDeclaration --> ReturnType
+FunctionDeclaration --> FunctionBody
+FunctionBody --> Statement
+Statement --> Expression
+Expression --> Operator
+Expression --> Factor
 @enduml

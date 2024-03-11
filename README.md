@@ -45,4 +45,4 @@
 
 ### Assignment 5
 
-- We build an AST (Abstract Syntax Tree) for the language. Before that we first finalze the design by drawing the classes of the AST. One can find it in `AST_Classes.pdf`.  
+- We build an AST (Abstract Syntax Tree) for the language. Before that we first finalze the design by drawing the classes of the AST. One can find it in `AST_Classes.jpg` or `AST_Classes.svg`.  
