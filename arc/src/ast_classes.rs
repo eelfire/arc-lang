@@ -79,7 +79,7 @@ pub struct IfStmt {
     condition: Box<Expression>,
     then_branch: Box<Statement>,
     elseif_branch: Option<Box<Statement>>, // Can be none, or one.
-    else_branch: Option<Box<Statement>>, // Can be none, or one.
+    else_branch: Option<Box<Statement>>,   // Can be none, or one.
 }
 
 pub struct WhileStmt {
@@ -138,7 +138,7 @@ pub struct TupleType {
 pub struct ListType {
     element_type: Box<Type>,
 }
-    
+
 pub struct StructType {
     name: String,
     fields: Vec<StructField>,
@@ -199,3 +199,139 @@ pub enum Type {
 //     DestructuringPattern(DestructuringPattern),
 // }
 
+/*
+    --------------------------------------------
+    --------------------------------------------
+*/
+
+// mod ast {
+//     use super::ArcParser::Rule;
+//     use pest::Span;
+
+//     fn span_to_str(span: Span) -> &str {
+//         span.as_str()
+//     }
+
+//     #[derive(Debug, FromPest)]
+//     #[pest_ast(rule(Rule::PROGRAM_BLOCK))]
+//     pub struct Program {
+//         pub blocks: Vec<ProgramBlock>,
+//     }
+
+//     pub enum ProgramBlock {
+//         ImportDecl(ImportDecl),
+//         ModuleDecl(ModuleDecl),
+//         StructDecl(StructDecl),
+//         EnumDecl(EnumDecl),
+//         ImplDecl(ImplDecl),
+//         FunctionDecl(FunctionDecl),
+//     }
+
+//     #[derive(Debug, FromPest)]
+//     #[pest_ast(rule(Rule::IMPORT_STMT))]
+//     pub struct ImportDecl {
+//         pub path: Vec<String>,
+//     }
+
+//     #[derive(Debug, FromPest)]
+//     #[pest_ast(rule(Rule::MODULE_DECL))]
+//     pub struct ModuleDecl {
+//         pub name: String,
+//         pub body: Option<Program>,
+//     }
+
+//     #[derive(Debug, FromPest)]
+//     #[pest_ast(rule(Rule::STRUCT_DECL))]
+//     pub struct StructDecl {
+//         pub name: String,
+//         pub fields: Vec<Field>,
+//     }
+
+//     #[derive(Debug, FromPest)]
+//     #[pest_ast(rule(Rule::STRUCT_FIELD))]
+//     pub struct Field {
+//         pub name: String,
+//         pub ty: String,
+//     }
+
+//     #[derive(Debug, FromPest)]
+//     #[pest_ast(rule(Rule::ENUM_DECL))]
+//     pub struct EnumDecl {
+//         pub name: String,
+//         pub variants: Vec<EnumVariant>,
+//     }
+
+//     #[derive(Debug, FromPest)]
+//     #[pest_ast(rule(Rule::ENUM_VARIANT))]
+//     pub struct EnumVariant {
+//         pub name: String,
+//         pub data: Option<String>,
+//     }
+
+//     #[derive(Debug, FromPest)]
+//     #[pest_ast(rule(Rule::IMPL_DECL))]
+//     pub struct ImplDecl {
+//         pub ty: String,
+//         pub body: Vec<FunctionDecl>,
+//     }
+
+//     #[derive(Debug, FromPest)]
+//     #[pest_ast(rule(Rule::FUNCTION_DECL))]
+//     pub struct FunctionDecl {
+//         pub name: String,
+//         pub params: Vec<Param>,
+//         pub return_type: Option<String>,
+//         pub body: Option<FunctionBody>,
+//     }
+
+//     #[derive(Debug, FromPest)]
+//     #[pest_ast(rule(Rule::PARAMETER))]
+//     pub struct Param {
+//         pub name: String,
+//         pub ty: String,
+//     }
+
+//     //     pub enum ProgramBlock {
+//     //         ImportStmt(ImportStmt),
+//     //         ModuleDecl(ModuleDecl),
+//     //         FunctionDecl(FunctionDecl),
+//     //         StructDecl(StructDecl),
+//     //         EnumDecl(EnumDecl),
+//     //         ImplDecl(ImplDecl),
+//     //     }
+
+//     //     pub struct Program {
+//     //         pub blocks: Vec<ProgramBlock>,
+//     //     }
+
+//     //     pub struct ImportStmt {
+//     //         pub path: String,
+//     //     }
+
+//     //     pub struct ModuleDecl {
+//     //         pub name: String,
+//     //         pub body: Option<Block>,
+//     //     }
+
+//     //     pub enum ArcType {
+//     //         I32,
+//     //         I64,
+//     //         F32,
+//     //         F64,
+//     //         Bool,
+//     //         String,
+//     //         Char,
+//     //     }
+
+//     //     pub struct Param {
+//     //         pub name: String,
+//     //         pub ty: ArcType,
+//     //     }
+
+//     //     pub struct FunctionDecl {
+//     //         pub name: String,
+//     //         pub params: Vec<Param>,
+//     //         pub return_type: Option<ArcType>,
+//     //         pub body: Option<Block>,
+//     //     }
+// }
