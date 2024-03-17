@@ -1,0 +1,12 @@
+//! Grammar doc
+
+// SOME PEST RULES
+
+// 1. expression as many times as it can (matching "eagerly", or "greedily")
+// 2. In general, when writing a parser with choices, put the longest or most specific choice first,
+// and the shortest or most general choice last.
+// 3. In the rule first ~ second, once first parses successfully, it has consumed some characters
+// that will never come back. second can only run on the input that first did not consume.
+// 4. the famous "shift/reduce conflict" in LR parsers is not a problem in PEGs.
+// 5. Since rule names are translated into Rust enum variants, they are not allowed to be Rust keywords.
+// 6. Other numbers of repetitions can be indicated using curly brackets

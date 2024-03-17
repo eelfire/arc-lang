@@ -1,0 +1,231 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "arc",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#types"
+		},
+		{
+			"include": "#numbers"
+		},
+		{
+			"include": "#operators"
+		},
+		{
+			"include": "#punctuation"
+		},
+		{
+			"include": "#identifiers"
+		},
+		{
+			"include": "#structs"
+		},
+		{
+			"include": "#variables"
+		},
+		{
+			"include": "#types"
+		},
+		{
+			"include": "#functions"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"match": "//.*$",
+					"name": "comment.line.double-slash.arc"
+				},
+				{
+					"begin": "/\\*",
+					"end": "\\*/",
+					"name": "comment.block.arc"
+				}
+			]
+		},
+		"identifiers": {
+			"patterns": [
+				{
+					"match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b",
+					"name": "variable.other.arc"
+				}
+			]
+		},
+		"keywords": {
+			"patterns": [
+				{
+					"match": "\\b(?:if|else|while|for|return|break|continue|function|var|let|const|true|false|null)\\b",
+					"name": "keyword.control.arc"
+				},
+				{
+					"match": "\\b(?:import|as|pub|mod)\\b",
+					"name": "keyword.other.arc"
+				},
+				{
+					"match": "\\bfx\\b",
+					"name": "keyword.other.fx.arc"
+				},
+				{
+					"match": "\\bmut\\b",
+					"name": "storage.modifier.mut.arc"
+				},
+				{
+					"comment": "type keyword",
+					"name": "keyword.declaration.type.rust storage.type.rust",
+					"match": "\\b(type)\\b"
+				},
+				{
+					"comment": "enum keyword",
+					"name": "keyword.declaration.enum.rust storage.type.rust",
+					"match": "\\b(enum)\\b"
+				},
+				{
+					"comment": "struct keyword",
+					"name": "keyword.declaration.struct.rust storage.type.rust",
+					"match": "\\b(struct)\\b"
+				},
+				{
+					"comment": "impl keyword",
+					"name": "keyword.declaration.impl.rust storage.type.rust",
+					"match": "\\b(impl)\\b"
+				}
+			]
+		},
+		"numbers": {
+			"patterns": [
+				{
+					"match": "\\b\\d+(?:\\.\\d+)?\\b",
+					"name": "constant.numeric.arc"
+				}
+			]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"match": "\\+|\\~|-|\\*|\\/|%|\\+=|-=|\\*=|\\/=|%=|==|!=|<|>|<=|>=|&&|\\|\\||!|\\?|:|\\.|,|;|\\(|\\)|\\[|\\]|\\{|\\}",
+					"name": "keyword.operator.arc"
+				}
+			]
+		},
+		"punctuation": {
+			"patterns": [
+				{
+					"match": "\\(|\\)|\\[|\\]|\\{|\\}",
+					"name": "punctuation.definition.arc"
+				}
+			]
+		},
+		"strings": {
+			"patterns": [
+				{
+					"begin": "\"",
+					"end": "\"",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.begin.arc"
+						}
+					},
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.end"
+						}
+					},
+					"patterns": [
+						{
+							"match": "\\\\(?:[nrt\"\\\\]|u[0-9a-fA-F]{4}|x[0-9a-fA-F]{2})",
+							"name": "constant.character.escape.arc"
+						}
+					],
+					"name": "string.quoted.double.arc"
+				}
+			]
+		},
+		"structs": {
+			"patterns": [
+				{
+					"comment": "struct declarations",
+					"match": "\\b(struct)\\s+(_?[A-Z][A-Za-z0-9_]*)\\b",
+					"captures": {
+						"1": {
+							"name": "keyword.declaration.struct.arc storage.type.arc"
+						},
+						"2": {
+							"name": "entity.name.type.struct.arc"
+						}
+					}
+				},
+				{
+					"comment": "enum declarations",
+					"match": "\\b(enum)\\s+(_?[A-Z][A-Za-z0-9_]*)\\b",
+					"captures": {
+						"1": {
+							"name": "keyword.declaration.enum.arc storage.type.arc"
+						},
+						"2": {
+							"name": "entity.name.type.enum.arc"
+						}
+					}
+				},
+				{
+					"comment": "type declarations",
+					"match": "\\b(type)\\s+(_?[A-Z][A-Za-z0-9_]*)\\b",
+					"captures": {
+						"1": {
+							"name": "keyword.declaration.type.arc storage.type.arc"
+						},
+						"2": {
+							"name": "entity.name.type.declaration.arc"
+						}
+					}
+				},
+				{
+					"comment": "impl declarations",
+					"match": "\\b(impl)\\s+(_?[A-Z][A-Za-z0-9_]*)\\b",
+					"captures": {
+						"1": {
+							"name": "keyword.declaration.impl.arc storage.type.arc"
+						},
+						"2": {
+							"name": "entity.name.type.impl.arc"
+						}
+					}
+				}
+			]
+		},
+		"types": {
+			"patterns": [
+				{
+					"match": "\\b(?:i32|i64|f32|f64|bool|string|char)\\b",
+					"name": "storage.type.arc"
+				}
+			]
+		},
+		"functions": {
+			"patterns": [
+				{
+					"match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(",
+					"name": "entity.name.function.arc"
+				}
+			]
+		},
+		"variables": {
+			"patterns": [
+				{
+					"match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\s*=",
+					"name": "variable.other.arc"
+				}
+			]
+		}
+	},
+	"scopeName": "source.arc"
+}

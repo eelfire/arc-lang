@@ -19,4 +19,4 @@ name = "arcc"
 path = "src/main.rs"
 
 [package.metadata.'cargo-make']
-aliases = {"run" = "arcc"}
+aliases = { "run" = "arcc" }
