@@ -11,4 +11,12 @@ fx main() {
   let a = 4;
   let b = 5;
   let c bool = a < b;
+
+  let arr_access = arr[0];
+  let arr_slice = arr[0:2];
+  
+  let list_access = a_list[0];
+  let list_slice = a_list[0:2];
+
+  let tup_access = tup.0;
 }
