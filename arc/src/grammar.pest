@@ -186,12 +186,12 @@ LIST_ACCESS        = { IDENTIFIER ~ "[" ~ (IDENTIFIER | INTEGER) ~ (":" ~ (IDENT
 IMPL_ACCESS        = { IDENTIFIER ~ "." ~ FUNCTION_CALL }
 STRUCT_ENUM_ACCESS = { (IDENTIFIER | a_self) ~ "." ~ IDENTIFIER }
 
-FUNCTION_DECLARATION = { a_pub? ~ a_fx ~ IDENTIFIER ~ PARAMETER_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
-PARAMETER_LIST       = { "(" ~ (PARAMETER ~ ("," ~ PARAMETER)*)* ~ ")" }
-PARAMETER            = { (bitwise_and ~ a_self) | (IDENTIFIER ~ (TYPE | IDENTIFIER)) }
-RETURN_TYPE          = { a_tilde ~ TYPE }
-RETURN_STMT          = { "return" ~ EXPRESSION ~ ";" }
-FUNCTION_BODY        = { "{" ~ STATEMENT* ~ RETURN_STMT? ~ "}" }
+FUNCTION_DECL  =  { a_pub? ~ a_fx ~ IDENTIFIER ~ PARAMETER_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
+PARAMETER_LIST = _{ "(" ~ (PARAMETER ~ ("," ~ PARAMETER)*)* ~ ")" }
+PARAMETER      =  { (bitwise_and ~ a_self) | (IDENTIFIER ~ (TYPE | IDENTIFIER)) }
+RETURN_TYPE    =  { a_tilde ~ TYPE }
+RETURN_STMT    =  { "return" ~ EXPRESSION ~ ";" }
+FUNCTION_BODY  =  { "{" ~ STATEMENT* ~ RETURN_STMT? ~ "}" }
 
 FUNCTION_CALL  = { (IDENTIFIER | a_err | a_ok) ~ ARGUMENTS_LIST }
 ARGUMENTS_LIST = { "(" ~ (ARGUMENT ~ ("," ~ ARGUMENT)*)? ~ ")" }
@@ -201,21 +201,21 @@ ERROR_CHECK = { a_let ~ (a_ok | a_err) ~ ARGUMENTS_LIST }
 
 CLOSURE = { "fx" ~ ARGUMENTS_LIST ~ RETURN_TYPE? ~ EXP_BLOCK }
 
-MODULE_DECLARATION = { a_pub? ~ a_mod ~ IDENTIFIER ~ MODULE_BLOCK }
-MODULE_BLOCK       = { "{" ~ PROGRAM_BLOCK ~ "}" }
-MODULE_ACCESS      = { IDENTIFIER ~ "::" ~ (FUNCTION_CALL | (IDENTIFIER ~ ("::" ~ IDENTIFIER)* ~ ("::" ~ FUNCTION_CALL)?)) }
+MODULE_DECL   = { a_pub? ~ a_mod ~ IDENTIFIER ~ MODULE_BLOCK }
+MODULE_BLOCK  = { "{" ~ PROGRAM_BLOCK ~ "}" }
+MODULE_ACCESS = { IDENTIFIER ~ "::" ~ (FUNCTION_CALL | (IDENTIFIER ~ ("::" ~ IDENTIFIER)* ~ ("::" ~ FUNCTION_CALL)?)) }
 
 IMPORT_STMT       = { a_import ~ IMPORT_IDENTIFIER ~ ("::" ~ IMPORT_IDENTIFIER)* ~ ("::" ~ multiply)? ~ ";" }
 IMPORT_IDENTIFIER = { a_self | a_super | IDENTIFIER }
 
-STRUCT_BLOCK = { a_struct ~ IDENTIFIER ~ "{" ~ STRUCT_FIELD* ~ "}" }
+STRUCT_DECL  = { a_struct ~ IDENTIFIER ~ "{" ~ STRUCT_FIELD* ~ "}" }
 STRUCT_FIELD = { IDENTIFIER ~ ":" ~ (TYPE | IDENTIFIER) ~ "," }
 
-ENUM_BLOCK   = { a_enum ~ IDENTIFIER ~ "{" ~ ENUM_VARIANT* ~ "}" }
+ENUM_DECL    = { a_enum ~ IDENTIFIER ~ "{" ~ ENUM_VARIANT* ~ "}" }
 ENUM_VARIANT = { IDENTIFIER ~ ("(" ~ (TYPE | IDENTIFIER) ~ ")")? ~ "," }
 
-IMPL_BLOCK  = { a_impl ~ IDENTIFIER ~ "{" ~ IMPL_METHOD* ~ "}" }
-IMPL_METHOD = { FUNCTION_DECLARATION }
+IMPL_DECL = { a_impl ~ IDENTIFIER ~ "{" ~ FUNCTION_DECL* ~ "}" }
+// IMPL_METHOD = { FUNCTION_DECL }
 
-PROGRAM_BLOCK = { (IMPORT_STMT | MODULE_DECLARATION | STRUCT_BLOCK | ENUM_BLOCK | IMPL_BLOCK | FUNCTION_DECLARATION)* }
+PROGRAM_BLOCK = { (IMPORT_STMT | MODULE_DECL | STRUCT_DECL | ENUM_DECL | IMPL_DECL | FUNCTION_DECL)* }
 PROGRAM       = { SOI ~ NEWLINE* ~ PROGRAM_BLOCK ~ NEWLINE* ~ EOI }
