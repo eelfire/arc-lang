@@ -38,29 +38,29 @@ a_fx        = _{ "fx" }
 a_tilde     = _{ "~" }
 a_let       =  { "let" }
 a_mut       =  { "mut" }
-a_import    =  { "import" }
+a_import    = _{ "import" }
 a_pub       =  { "pub" }
-a_mod       =  { "mod" }
+a_mod       = _{ "mod" }
 a_super     =  { "super" }
 a_self      =  { "self" }
-a_if        =  { "if" }
-a_else      =  { "else" }
-a_while     =  { "while" }
+a_if        = _{ "if" }
+a_else      = _{ "else" }
+a_while     = _{ "while" }
 a_for       =  { "for" }
 a_in        =  { "in" }
-a_continue  =  { "continue" }
-a_break     =  { "break" }
-a_match     =  { "match" }
+a_continue  = _{ "continue" }
+a_break     = _{ "break" }
+a_match     = _{ "match" }
 a_fat_arrow =  { "=>" }
-a_return    =  { "return" }
+a_return    = _{ "return" }
 a_result    =  { "result" }
 a_ok        =  { "ok" }
 a_err       =  { "err" }
 a_type      =  { "type" }
 a_as        =  { "as" }
-a_struct    =  { "struct" }
-a_enum      =  { "enum" }
-a_impl      =  { "impl" }
+a_struct    = _{ "struct" }
+a_enum      = _{ "enum" }
+a_impl      = _{ "impl" }
 
 INTEGER = @{ ("-" | "0b" | "0o" | "0x")? ~ ("_")? ~ ASCII_DIGIT ~ (ASCII_DIGIT | "_")* }
 FLOAT   = @{ INTEGER ~ "." ~ ASCII_DIGIT* }
@@ -149,13 +149,15 @@ STATEMENT = {
     a_let? ~ a_mut? ~ IDENTIFIER ~ TYPE? ~ ASSIGNMENT ~ (CLOSURE | FUNCTION_CALL | MODULE_ACCESS | IF_STATEMENT | MATCH_STATEMENT | EXPRESSION | EXP_BLOCK) ~ ";"
   | (FUNCTION_CALL | IMPL_ACCESS | MODULE_ACCESS) ~ ";"
   | BREAK_STMT
+  | CONTINUE_STMT
   | IF_STATEMENT
   | MATCH_STATEMENT
   | FOR_LOOP
   | WHILE_LOOP
 }
 
-BREAK_STMT = { a_break ~ ";" }
+BREAK_STMT    = { a_break ~ ";" }
+CONTINUE_STMT = { a_continue ~ ";" }
 
 IF_STATEMENT      = { "if" ~ EXPRESSION ~ EXP_BLOCK ~ ELSE_IF_STATEMENT* ~ ELSE_BLOCK? }
 ELSE_IF_STATEMENT = { "else" ~ "if" ~ EXPRESSION ~ EXP_BLOCK }
@@ -201,12 +203,12 @@ ERROR_CHECK = { a_let ~ (a_ok | a_err) ~ ARGUMENTS_LIST }
 
 CLOSURE = { "fx" ~ ARGUMENTS_LIST ~ RETURN_TYPE? ~ EXP_BLOCK }
 
-MODULE_DECL   = { a_pub? ~ a_mod ~ IDENTIFIER ~ MODULE_BLOCK }
-MODULE_BLOCK  = { "{" ~ PROGRAM_BLOCK ~ "}" }
-MODULE_ACCESS = { IDENTIFIER ~ "::" ~ (FUNCTION_CALL | (IDENTIFIER ~ ("::" ~ IDENTIFIER)* ~ ("::" ~ FUNCTION_CALL)?)) }
+MODULE_DECL   =  { a_pub? ~ a_mod ~ IDENTIFIER ~ MODULE_BLOCK }
+MODULE_BLOCK  = _{ "{" ~ PROGRAM_BLOCK ~ "}" }
+MODULE_ACCESS =  { IDENTIFIER ~ "::" ~ (FUNCTION_CALL | (IDENTIFIER ~ ("::" ~ IDENTIFIER)* ~ ("::" ~ FUNCTION_CALL)?)) }
 
-IMPORT_STMT       = { a_import ~ IMPORT_IDENTIFIER ~ ("::" ~ IMPORT_IDENTIFIER)* ~ ("::" ~ multiply)? ~ ";" }
-IMPORT_IDENTIFIER = { a_self | a_super | IDENTIFIER }
+IMPORT_DECL       =  { a_import ~ IMPORT_IDENTIFIER ~ ("::" ~ IMPORT_IDENTIFIER)* ~ ("::" ~ multiply)? ~ ";" }
+IMPORT_IDENTIFIER = _{ a_self | a_super | IDENTIFIER }
 
 STRUCT_DECL  = { a_struct ~ IDENTIFIER ~ "{" ~ STRUCT_FIELD* ~ "}" }
 STRUCT_FIELD = { IDENTIFIER ~ ":" ~ (TYPE | IDENTIFIER) ~ "," }
@@ -217,5 +219,5 @@ ENUM_VARIANT = { IDENTIFIER ~ ("(" ~ (TYPE | IDENTIFIER) ~ ")")? ~ "," }
 IMPL_DECL = { a_impl ~ IDENTIFIER ~ "{" ~ FUNCTION_DECL* ~ "}" }
 // IMPL_METHOD = { FUNCTION_DECL }
 
-PROGRAM_BLOCK = { (IMPORT_STMT | MODULE_DECL | STRUCT_DECL | ENUM_DECL | IMPL_DECL | FUNCTION_DECL)* }
+PROGRAM_BLOCK = { (IMPORT_DECL | MODULE_DECL | STRUCT_DECL | ENUM_DECL | IMPL_DECL | FUNCTION_DECL)* }
 PROGRAM       = { SOI ~ NEWLINE* ~ PROGRAM_BLOCK ~ NEWLINE* ~ EOI }
