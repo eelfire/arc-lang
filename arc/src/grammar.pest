@@ -36,8 +36,8 @@ KEYWORD     =  {
 
 a_fx        = _{ "fx" }
 a_tilde     = _{ "~" }
-a_let       =  { "let" }
-a_mut       =  { "mut" }
+a_let       = _{ "let" }
+a_mut       = _{ "mut" }
 a_import    = _{ "import" }
 a_pub       =  { "pub" }
 a_mod       = _{ "mod" }
@@ -146,8 +146,8 @@ left_shift    = { "<<" }
 right_shift   = { ">>" }
 
 STATEMENT = {
-    a_let? ~ a_mut? ~ IDENTIFIER ~ TYPE? ~ ASSIGNMENT ~ (CLOSURE | FUNCTION_CALL | MODULE_ACCESS | IF_STATEMENT | MATCH_STATEMENT | EXPRESSION | EXP_BLOCK) ~ ";"
-  | (FUNCTION_CALL | IMPL_ACCESS | MODULE_ACCESS) ~ ";"
+    DECL_STMT
+  | CALL_STMT
   | BREAK_STMT
   | CONTINUE_STMT
   | IF_STATEMENT
@@ -155,6 +155,12 @@ STATEMENT = {
   | FOR_LOOP
   | WHILE_LOOP
 }
+
+CALL_STMT      = { (FUNCTION_CALL | IMPL_ACCESS | MODULE_ACCESS) ~ ";" }
+DECL_STMT      = { MUT | IMMUT | VARIABLE_REASS }
+MUT            = { a_let ~ a_mut ~ IDENTIFIER ~ TYPE? ~ ASSIGNMENT ~ (CLOSURE | FUNCTION_CALL | MODULE_ACCESS | IF_STATEMENT | MATCH_STATEMENT | EXPRESSION | EXP_BLOCK) ~ ";" }
+IMMUT          = { a_let ~ IDENTIFIER ~ TYPE? ~ ASSIGNMENT ~ (CLOSURE | FUNCTION_CALL | MODULE_ACCESS | IF_STATEMENT | MATCH_STATEMENT | EXPRESSION | EXP_BLOCK) ~ ";" }
+VARIABLE_REASS = { IDENTIFIER ~ ASSIGNMENT ~ (CLOSURE | FUNCTION_CALL | MODULE_ACCESS | IF_STATEMENT | MATCH_STATEMENT | EXPRESSION | EXP_BLOCK) ~ ";" }
 
 BREAK_STMT    = { a_break ~ ";" }
 CONTINUE_STMT = { a_continue ~ ";" }
@@ -188,12 +194,12 @@ LIST_ACCESS        = { IDENTIFIER ~ "[" ~ (IDENTIFIER | INTEGER) ~ (":" ~ (IDENT
 IMPL_ACCESS        = { IDENTIFIER ~ "." ~ FUNCTION_CALL }
 STRUCT_ENUM_ACCESS = { (IDENTIFIER | a_self) ~ "." ~ IDENTIFIER }
 
-FUNCTION_DECL  =  { a_pub? ~ a_fx ~ IDENTIFIER ~ PARAMETER_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
-PARAMETER_LIST = _{ "(" ~ (PARAMETER ~ ("," ~ PARAMETER)*)* ~ ")" }
-PARAMETER      =  { (bitwise_and ~ a_self) | (IDENTIFIER ~ (TYPE | IDENTIFIER)) }
-RETURN_TYPE    =  { a_tilde ~ TYPE }
-RETURN_STMT    =  { "return" ~ EXPRESSION ~ ";" }
-FUNCTION_BODY  =  { "{" ~ STATEMENT* ~ RETURN_STMT? ~ "}" }
+FUNCTION_DECL  = { a_pub? ~ a_fx ~ IDENTIFIER ~ PARAMETER_LIST ~ RETURN_TYPE? ~ FUNCTION_BODY }
+PARAMETER_LIST = { "(" ~ (PARAMETER ~ ("," ~ PARAMETER)*)* ~ ")" }
+PARAMETER      = { (bitwise_and ~ a_self) | (IDENTIFIER ~ (TYPE | IDENTIFIER)) }
+RETURN_TYPE    = { a_tilde ~ TYPE }
+RETURN_STMT    = { "return" ~ EXPRESSION ~ ";" }
+FUNCTION_BODY  = { "{" ~ STATEMENT* ~ RETURN_STMT? ~ "}" }
 
 FUNCTION_CALL  = { (IDENTIFIER | a_err | a_ok) ~ ARGUMENTS_LIST }
 ARGUMENTS_LIST = { "(" ~ (ARGUMENT ~ ("," ~ ARGUMENT)*)? ~ ")" }
