@@ -1,7 +1,7 @@
 /* Types & conversion */
 
 // support for unicode characters
-fx main() {
+fx da_fn() {
     let x = 12; // by default this is i32
     let a = 12 as i32;
     let b = 4.3; // by default this is f64

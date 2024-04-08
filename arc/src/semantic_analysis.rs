@@ -1,15 +1,36 @@
-use crate::parser::ArcParser;
 use crate::parser::Rule;
+use pest::iterators::Pair;
 use pest::iterators::Pairs;
-use std::any::Any;
 use std::collections::HashMap;
 
+#[allow(unused_imports)]
 use crate::parser::print_nested_pairs;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum SymbolType {
+    Parameter,
+    // Identifier,
+    Function,
+    Struct,
+    Enum,
+    Impl,
+    Mut,
+    Immut,
+    // VariableReass,
+    FnCall,
+    ImplAccess,
+    StructEnumAccess,
+    // ModAccess,
+    TupAccess,
+    ArrAccess,
+    ListAccess,
+    Other,
+}
 
 #[derive(Debug, Clone)]
 pub struct Symbol {
     name: String,
-    symbol_type: String,
+    symbol_type: SymbolType,
     location: (usize, usize),
     // used: bool,
     // other fields...
@@ -28,9 +49,176 @@ pub struct SymbolTable {
     current_scope: String,
 }
 
-pub trait SymbolTableTrait {}
+pub trait SymbolTableTrait {
+    fn insert_scope(&mut self, scope: Scope);
+    fn insert_symbol(&mut self, symbol: Symbol);
+    fn get_symbol(&self, symbol_name: &String, scope_name: &String) -> Option<&Symbol>;
+    fn get_scope(&self, scope_name: &String) -> Option<&Scope>;
+    fn get_current_scope(&self) -> &String;
+    fn set_current_scope(&mut self, scope_name: String);
+    fn get_symbol_recursive(&self, symbol_name: &String, scope_name: &String) -> Option<&Symbol>;
+    // fn already_exists(&self, symbol_name: String, scope_name: String) -> Option<&Symbol>;
+}
 
-impl SymbolTableTrait for SymbolTable {}
+impl SymbolTableTrait for SymbolTable {
+    fn insert_scope(&mut self, scope: Scope) {
+        self.scopes.insert(scope.name.clone(), scope);
+    }
+
+    fn insert_symbol(&mut self, symbol: Symbol) {
+        self.scopes
+            .get_mut(&self.current_scope)
+            .unwrap()
+            .symbols
+            .insert(symbol.name.clone(), symbol);
+    }
+
+    fn get_symbol(&self, symbol_name: &String, scope_name: &String) -> Option<&Symbol> {
+        self.scopes
+            .get(scope_name)
+            .unwrap()
+            .symbols
+            .get(symbol_name)
+    }
+
+    fn get_scope(&self, scope_name: &String) -> Option<&Scope> {
+        self.scopes.get(scope_name)
+    }
+
+    fn get_current_scope(&self) -> &String {
+        &self.current_scope
+    }
+
+    fn set_current_scope(&mut self, scope_name: String) {
+        self.current_scope = scope_name;
+    }
+
+    fn get_symbol_recursive(&self, symbol_name: &String, scope_name: &String) -> Option<&Symbol> {
+        let mut current_scope = scope_name;
+        loop {
+            let scope = self.get_scope(current_scope).unwrap();
+            if let Some(symbol) = scope.symbols.get(symbol_name) {
+                return Some(symbol);
+            }
+            if scope.parent == "" {
+                return None;
+            }
+            current_scope = &scope.parent;
+        }
+    }
+
+    // fn already_exists(&self, symbol_name: &String, scope_name: &String) -> Option<&Symbol> {
+    //     self.scopes
+    //         .get(scope_name)
+    //         .unwrap()
+    //         .symbols
+    //         .get(symbol_name)
+    // }
+}
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+enum FlagType {
+    Expression,
+    CallStmt,
+    FlowControl,
+}
+
+fn analyze_pair(pair: Pair<Rule>, symbol_table: &mut SymbolTable, file_path: &str) {
+    let pairs = pair.into_inner();
+    for a_pair in pairs {
+        let node = a_pair.into_inner().next().unwrap();
+        let node_name = node.as_str().to_string();
+
+        if let Some(symbol) = symbol_table.get_symbol(&node_name, symbol_table.get_current_scope())
+        {
+            println!(
+                "SEM_ERR: `{}` already exists in scope at `{}:{}:{}`",
+                node_name, file_path, symbol.location.0, symbol.location.1
+            );
+            return;
+        }
+
+        let symbol = Symbol {
+            name: node_name.clone(),
+            symbol_type: SymbolType::Other,
+            location: node.line_col(),
+        };
+
+        println!("{:?}", symbol_table.get_current_scope());
+
+        symbol_table.insert_symbol(symbol);
+    }
+}
+
+fn analyze_pair_identifier(
+    pair: Pair<Rule>,
+    symbol_table: &mut SymbolTable,
+    flags: &HashMap<FlagType, bool>,
+    symbol_type: SymbolType,
+    file_path: &str,
+) {
+    let node_name = pair.as_str().to_string();
+
+    // if let Some(symbol) = symbol_table.get_symbol(&node_name, symbol_table.get_current_scope()) {
+    //     if flags.values().any(|x| x == &true) {
+    //         return;
+    //     } else {
+    //         println!(
+    //             "SEM_ERR: `{}` already exists in scope at `{}:{}:{}`",
+    //             node_name, file_path, symbol.location.0, symbol.location.1
+    //         );
+    //         return;
+    //     }
+    // }
+
+    let is_one_of_flags = flags.values().any(|x| x == &true);
+    let in_current_scope = symbol_table.get_symbol(&node_name, symbol_table.get_current_scope());
+    let in_parent_scope = symbol_table.get_symbol_recursive(
+        &node_name,
+        &symbol_table
+            .scopes
+            .get(&symbol_table.current_scope)
+            .unwrap()
+            .parent,
+    );
+
+    if is_one_of_flags {
+        if in_current_scope.is_none() && in_parent_scope.is_none() {
+            println!(
+                "SEM_ERR: `{}` does not exist in any scope at `{}:{}:{}`",
+                node_name,
+                file_path,
+                &pair.line_col().0,
+                &pair.line_col().1
+            );
+            return;
+        }
+    } else {
+        if in_current_scope.is_some() {
+            println!(
+                "SEM_ERR: `{}` already exists in scope at `{}:{}:{}`",
+                node_name,
+                file_path,
+                in_current_scope.unwrap().location.0,
+                in_current_scope.unwrap().location.1
+            );
+            return;
+        }
+    }
+
+    println!("symbol_type: {:?}", symbol_type);
+    let symbol = Symbol {
+        name: node_name.clone(),
+        symbol_type: symbol_type,
+        location: pair.line_col(),
+    };
+
+    // println!("{:?}", symbol_table.get_current_scope());
+
+    if in_current_scope.is_none() {
+        symbol_table.insert_symbol(symbol);
+    }
+}
 
 pub fn analyze(program: Pairs<Rule>, file_path: &str) {
     loop_analyze(program, file_path);
@@ -55,11 +243,66 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
 
     let mut flatten_pairs = program.flatten();
 
+    let mut flags = HashMap::new();
+    flags.insert(FlagType::Expression, false);
+    flags.insert(FlagType::CallStmt, false);
+    flags.insert(FlagType::FlowControl, false);
+
+    let mut flow_control_count = 0;
+    let mut last_symbol_type = SymbolType::Other;
+
     while let Some(pair) = flatten_pairs.next() {
         // println!("{:?}", pair.as_rule());
+        // println!("current_scope: {:?}", symbol_table.current_scope);
+        // println!("flags: {:?}", &flags);
+        // println!("symbol_type: {:?}", last_symbol_type);
+
         match pair.as_rule() {
             Rule::EOI => {
                 // return;
+            }
+
+            Rule::SCOPE_START => {
+                println!("scope_start: {:?}", pair.as_str());
+                if *flags.get(&FlagType::FlowControl).unwrap_or(&false) {
+                    let flow_control_scope_name = format!(
+                        "{}_fc_{}",
+                        symbol_table.get_current_scope(),
+                        flow_control_count
+                    );
+                    flow_control_count += 1;
+
+                    let flow_control_scope = Scope {
+                        name: flow_control_scope_name.clone(),
+                        parent: symbol_table.current_scope.clone(),
+                        symbols: HashMap::new(),
+                    };
+
+                    symbol_table.insert_scope(flow_control_scope);
+                    symbol_table.current_scope = flow_control_scope_name;
+                } else {
+                    // let scope_name = flatten_pairs.next().unwrap().as_str().to_string();
+                    // let scope = Scope {
+                    //     name: scope_name.clone(),
+                    //     parent: symbol_table.current_scope.clone(),
+                    //     symbols: HashMap::new(),
+                    // };
+
+                    // symbol_table.insert_scope(scope);
+                    // symbol_table.current_scope = scope_name.clone();
+                }
+            }
+            Rule::SCOPE_END => {
+                symbol_table.current_scope = symbol_table
+                    .scopes
+                    .get(&symbol_table.current_scope)
+                    .unwrap()
+                    .parent
+                    .clone();
+            }
+            Rule::STATEMENT_END => {
+                flags.insert(FlagType::Expression, false);
+                flags.insert(FlagType::CallStmt, false);
             }
 
             // Rule::WHITESPACE => todo!(),
@@ -68,12 +311,17 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             // Rule::MultiLineComment => todo!(),
 
             // Rule::IDENT_CHARS => todo!(),
-            // Rule::IDENTIFIER => {
-            //     // let mut IDENTIFER = EXPRESSION;
-            //     // let IDENTIFIER type = EXPRESSION;
-            //     // let IDENTIFIER = EXPRESSION;
-            //     // let mut IDENTIFIER type = EXPRESSION;
-            // }
+            Rule::IDENTIFIER => {
+                // println!("IDENTIFIER: {:?}", pair);
+                println!("IDENTIFIER: {:?}", pair.as_str());
+                analyze_pair_identifier(
+                    pair,
+                    &mut symbol_table,
+                    &flags,
+                    last_symbol_type.clone(),
+                    file_path,
+                );
+            }
             // Rule::KEYWORD => todo!(),
 
             // Rule::a_fx => todo!(),
@@ -180,20 +428,107 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             // Rule::bitwise_or => todo!(),
             // Rule::left_shift => todo!(),
             // Rule::right_shift => todo!(),
+
             // Rule::STATEMENT => {
             //     // DECL_STMT = { MUT | IMMUT | VARIABLE_REASS };
             // }
+            Rule::MUT => {
+                last_symbol_type = SymbolType::Mut;
+            }
+            Rule::IMMUT => {
+                last_symbol_type = SymbolType::Immut;
+            }
+            Rule::VARIABLE_REASS => {
+                // last_symbol_type = SymbolType::Other;
+                // check if variable is already in symbol table of current scope
+                let variable_name = flatten_pairs.next().unwrap().as_str().to_string();
+                let in_current_scope =
+                    symbol_table.get_symbol(&variable_name, symbol_table.get_current_scope());
+                let in_parent_scope = symbol_table.get_symbol_recursive(
+                    &variable_name,
+                    &symbol_table
+                        .scopes
+                        .get(&symbol_table.current_scope)
+                        .unwrap()
+                        .parent,
+                );
 
-            // Rule::BREAK_STMT => todo!(),
+                let line_col = pair.line_col();
+                if in_current_scope.is_none() && in_parent_scope.is_none() {
+                    println!(
+                        "SEM_ERR: Variable `{}` does not exist in any scope at `{}:{}:{}`",
+                        variable_name, file_path, line_col.0, line_col.1
+                    );
+                    // return;
+                }
+            }
+
+            Rule::CALL_STMT => {
+                flags.insert(FlagType::CallStmt, true);
+            }
+
+            Rule::BREAK_STMT => {
+                // check if break is inside a loop
+                let mut current_scope = symbol_table.get_current_scope();
+                loop {
+                    let scope = symbol_table.get_scope(current_scope).unwrap();
+                    if scope.name == "global" {
+                        println!(
+                            "SEM_ERR: `break` statement not inside a loop at `{}:{}`",
+                            file_path,
+                            pair.line_col().0
+                        );
+                        break;
+                    }
+                    current_scope = &scope.parent;
+                }
+            }
             // Rule::CONTINUE_STMT => todo!(),
+            Rule::FLOW_CONTROL => {
+                flags.insert(FlagType::FlowControl, true);
 
+                // FLOW_CONTROL = { IF_STATEMENT | MATCH_STATEMENT | FOR_LOOP | WHILE_LOOP }
+                // flow_control_scope_name = parent_scope_name + "_flow_control_" + flow_control_count
+                // flow_control_count += 1
+
+                // let flow_control_scope_name = format!(
+                //     "{}_flow_control_{}",
+                //     symbol_table.get_current_scope(),
+                //     flow_control_count
+                // );
+                // flow_control_count += 1;
+
+                // let flow_control_scope = Scope {
+                //     name: flow_control_scope_name.clone(),
+                //     parent: symbol_table.current_scope.clone(),
+                //     symbols: HashMap::new(),
+                // };
+
+                // symbol_table.insert_scope(flow_control_scope);
+                // symbol_table.current_scope = flow_control_scope_name;
+            }
             // Rule::IF_STATEMENT => todo!(),
             // Rule::ELSE_IF_STATEMENT => todo!(),
             // Rule::ELSE_BLOCK => todo!(),
             // Rule::EXP_BLOCK => todo!(),
             // Rule::BLOCK => todo!(),
+            Rule::MATCH_STATEMENT => {
+                let flow_control_scope_name = format!(
+                    "{}_fc_{}",
+                    symbol_table.get_current_scope(),
+                    flow_control_count
+                );
+                flow_control_count += 1;
 
-            // Rule::MATCH_STATEMENT => todo!(),
+                let flow_control_scope = Scope {
+                    name: flow_control_scope_name.clone(),
+                    parent: symbol_table.current_scope.clone(),
+                    symbols: HashMap::new(),
+                };
+
+                symbol_table.insert_scope(flow_control_scope);
+                symbol_table.current_scope = flow_control_scope_name;
+            }
             // Rule::MATCH_CASE => todo!(),
             // Rule::MATCH_DEFAULT => todo!(),
 
@@ -201,17 +536,30 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             // Rule::RANGE => todo!(),
 
             // Rule::WHILE_LOOP => todo!(),
+            Rule::EXPRESSION => {
+                flags.insert(FlagType::Expression, true);
+            }
+            Rule::FACTOR => {}
 
-            // Rule::EXPRESSION => todo!(),
-            // Rule::FACTOR => todo!(),
-
-            // Rule::TUPLE_ACCESS => todo!(),
-            // Rule::ARRAY_ACCESS => todo!(),
-            // Rule::LIST_ACCESS => todo!(),
-            // Rule::IMPL_ACCESS => todo!(),
-            Rule::STRUCT_ENUM_ACCESS => todo!(),
+            Rule::TUPLE_ACCESS => {
+                last_symbol_type = SymbolType::TupAccess;
+            }
+            Rule::ARRAY_ACCESS => {
+                last_symbol_type = SymbolType::ArrAccess;
+            }
+            Rule::LIST_ACCESS => {
+                last_symbol_type = SymbolType::ListAccess;
+            }
+            Rule::IMPL_ACCESS => {
+                last_symbol_type = SymbolType::ImplAccess;
+            }
+            Rule::STRUCT_ENUM_ACCESS => {
+                last_symbol_type = SymbolType::StructEnumAccess;
+            }
 
             Rule::FUNCTION_DECL => {
+                last_symbol_type = SymbolType::Function;
+
                 println!("{:?}", pair.as_rule());
                 let function_name = flatten_pairs.next().unwrap().as_str().to_string();
 
@@ -239,7 +587,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
 
                 let function_symbol = Symbol {
                     name: function_name.clone(),
-                    symbol_type: String::from("function"),
+                    symbol_type: SymbolType::Function,
                     location: pair.line_col(),
                 };
 
@@ -256,208 +604,25 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
 
                 symbol_table.current_scope = function_name.clone();
 
-                loop {
-                    let next_pair = flatten_pairs.next().unwrap();
-                    if next_pair.as_rule() == Rule::FUNCTION_BODY {
-                        break;
-                    }
-                    // println!("\t{:?}", next_pair.as_rule());
-                }
-
-                // let function_body = flatten_pairs.next().unwrap();
-                // function_body.into_inner().
-
-                let function_pairs = pair.into_inner();
-                // print_nested_pairs(&function_pairs, 0);
-
-                for function_pair in function_pairs {
-                    // parameter list if any
-                    // return type if any
-                    // function body
-
-                    match function_pair.as_rule() {
-                        Rule::PARAMETER_LIST => {
-                            let parameter_list_pairs = function_pair.into_inner();
-                            for parameter_pair in parameter_list_pairs {
-                                let parameter = parameter_pair.into_inner().next().unwrap();
-                                let parameter_name = parameter.as_str().to_string();
-
-                                // check if parameter is already in symbol table of current scope
-                                let already_exists = symbol_table
-                                    .scopes
-                                    .get(&function_name)
-                                    .unwrap()
-                                    .symbols
-                                    .get(&parameter_name);
-
-                                if let Some(symbol) = already_exists {
-                                    println!(
-                                        "SEM_ERR: Parameter `{}` already exists in scope at `{}:{}:{}`",
-                                        parameter_name,
-                                        file_path,
-                                        symbol.location.0,
-                                        symbol.location.1
-                                    );
-                                    return;
-                                }
-
-                                let parameter_symbol = Symbol {
-                                    name: parameter_name.clone(),
-                                    symbol_type: String::from("parameter"),
-                                    location: parameter.line_col(),
-                                };
-
-                                symbol_table
-                                    .scopes
-                                    .get_mut(&function_name)
-                                    .unwrap()
-                                    .symbols
-                                    .insert(parameter_name.clone(), parameter_symbol);
-                            }
-                        }
-                        Rule::RETURN_TYPE => {
-                            let return_type_pairs = function_pair.into_inner();
-                            for return_type_pair in return_type_pairs {
-                                println!("TODO: remember to check return type")
-                            }
-                        }
-                        Rule::FUNCTION_BODY => {
-                            let function_body_pairs = function_pair.into_inner();
-                            for function_body_pair in function_body_pairs {
-                                match function_body_pair.as_rule() {
-                                    Rule::STATEMENT => {
-                                        let statement_pairs = function_body_pair.into_inner();
-                                        for statement_pair in statement_pairs {
-                                            println!(
-                                                "\t\tstmt: {:?} - {:?}",
-                                                statement_pair.as_rule(),
-                                                statement_pair.as_str()
-                                            );
-                                            // statement grammar rule:
-                                            // STATEMENT = {
-                                            //     DECL_STMT
-                                            //   | CALL_STMT
-                                            //   | BREAK_STMT
-                                            //   | CONTINUE_STMT
-                                            //   | IF_STATEMENT
-                                            //   | MATCH_STATEMENT
-                                            //   | FOR_LOOP
-                                            //   | WHILE_LOOP
-                                            // }
-                                            let statement_inner_pairs = statement_pair.into_inner();
-                                            for statement_inner_pair in statement_inner_pairs {
-                                                match statement_inner_pair.as_rule() {
-                                                    Rule::MUT => {
-                                                        let mut_pairs =
-                                                            statement_inner_pair.into_inner();
-                                                        for mut_pair in mut_pairs {
-                                                            match mut_pair.as_rule() {
-                                                                _ => {
-                                                                    println!(
-                                                                        "\t\t\tmut: {:?} - {:?}",
-                                                                        mut_pair.as_rule(),
-                                                                        mut_pair.as_str()
-                                                                    );
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    Rule::IMMUT => {
-                                                        let immut_pairs =
-                                                            statement_inner_pair.into_inner();
-                                                        for immut_pair in immut_pairs {
-                                                            match immut_pair.as_rule() {
-                                                                _ => {
-                                                                    println!(
-                                                                        "\t\t\timmut: {:?} - {:?}",
-                                                                        immut_pair.as_rule(),
-                                                                        immut_pair.as_str()
-                                                                    );
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    Rule::VARIABLE_REASS => {
-                                                        let variable_reass_pairs =
-                                                            statement_inner_pair.into_inner();
-                                                        for variable_reass_pair in
-                                                            variable_reass_pairs
-                                                        {
-                                                            match variable_reass_pair.as_rule() {
-                                                                _ => {
-                                                                    println!(
-                                                                        "\t\t\tvar_reass: {:?} - {:?}",
-                                                                        variable_reass_pair.as_rule(),
-                                                                        variable_reass_pair.as_str()
-                                                                    );
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    Rule::FUNCTION_CALL => {
-                                                        let function_call_pairs =
-                                                            statement_inner_pair.into_inner();
-                                                        for function_call_pair in
-                                                            function_call_pairs
-                                                        {
-                                                            match function_call_pair.as_rule() {
-                                                                _ => {
-                                                                    println!(
-                                                                        "\t\t\tfn_call: {:?} - {:?}",
-                                                                        function_call_pair.as_rule(),
-                                                                        function_call_pair.as_str()
-                                                                    );
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    Rule::IMPL_ACCESS => todo!(),
-                                                    Rule::MODULE_ACCESS => todo!(),
-                                                    _ => {
-                                                        // println!(
-                                                        //     "\t\t\tstmt_inner: {:?} - {:?}",
-                                                        //     statement_inner_pair.as_rule(),
-                                                        //     statement_inner_pair.as_str()
-                                                        // );
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    Rule::RETURN_STMT => {
-                                        let expression_pairs = function_body_pair.into_inner();
-                                        for expression_pair in expression_pairs {
-                                            println!(
-                                                "\t\tret_stmt: {:?}",
-                                                expression_pair.as_str()
-                                            );
-                                        }
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
-                        _ => {
-                            println!("\t\t - {:?}", function_pair.as_rule());
-                        }
-                    }
-                }
-
-                // go back to parent scope
-                symbol_table.current_scope = symbol_table
-                    .scopes
-                    .get(&function_name)
-                    .unwrap()
-                    .parent
-                    .clone();
+                // // go back to parent scope
+                // symbol_table.current_scope = symbol_table
+                //     .scopes
+                //     .get(&function_name)
+                //     .unwrap()
+                //     .parent
+                //     .clone();
             }
             // Rule::PARAMETER_LIST => todo!(),
-            // Rule::PARAMETER => todo!(),
+            Rule::PARAMETER => {
+                last_symbol_type = SymbolType::Parameter;
+            }
             // Rule::RETURN_TYPE => todo!(),
             // Rule::RETURN_STMT => todo!(),
 
             // Rule::FUNCTION_BODY => todo!(),
-            // Rule::FUNCTION_CALL => todo!(),
+            Rule::FUNCTION_CALL => {
+                last_symbol_type = SymbolType::FnCall;
+            }
             // Rule::ARGUMENTS_LIST => todo!(),
             // Rule::ARGUMENT => todo!(),
 
@@ -467,23 +632,135 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
 
             // Rule::MODULE_DECL => todo!(),
             // Rule::MODULE_BLOCK => todo!(),
-            // Rule::MODULE_ACCESS => todo!(),
+            Rule::MODULE_ACCESS => {
+                // last_symbol_type = SymbolType::ModAccess;
+            }
 
             // Rule::IMPORT_DECL => todo!(),
             // Rule::IMPORT_IDENTIFIER => todo!(),
+            Rule::STRUCT_DECL => {
+                last_symbol_type = SymbolType::Struct;
 
-            // Rule::STRUCT_DECL => todo!(),
+                let struct_name = flatten_pairs.next().unwrap().as_str().to_string();
+                let get_symbol =
+                    symbol_table.get_symbol(&struct_name, symbol_table.get_current_scope());
+
+                if let Some(symbol) = get_symbol {
+                    println!(
+                        "SEM_ERR: Struct `{}` already exists in scope at `{}:{}:{}`",
+                        struct_name, file_path, symbol.location.0, symbol.location.1
+                    );
+                    // return;
+                }
+
+                let struct_scope = Scope {
+                    name: struct_name.clone(),
+                    parent: symbol_table.current_scope.clone(),
+                    symbols: HashMap::new(),
+                };
+
+                let struct_symbol = Symbol {
+                    name: struct_name.clone(),
+                    symbol_type: SymbolType::Struct,
+                    location: pair.line_col(),
+                };
+
+                symbol_table
+                    .scopes
+                    .get_mut(&symbol_table.current_scope)
+                    .unwrap()
+                    .symbols
+                    .insert(struct_name.clone(), struct_symbol);
+
+                symbol_table
+                    .scopes
+                    .insert(struct_name.clone(), struct_scope);
+
+                symbol_table.current_scope = struct_name.clone();
+            }
             // Rule::STRUCT_FIELD => todo!(),
+            Rule::ENUM_DECL => {
+                last_symbol_type = SymbolType::Enum;
 
-            // Rule::ENUM_DECL => todo!(),
+                let enum_name = flatten_pairs.next().unwrap().as_str().to_string();
+                let get_symbol =
+                    symbol_table.get_symbol(&enum_name, symbol_table.get_current_scope());
+
+                if let Some(symbol) = get_symbol {
+                    println!(
+                        "SEM_ERR: Enum `{}` already exists in scope at `{}:{}:{}`",
+                        enum_name, file_path, symbol.location.0, symbol.location.1
+                    );
+                    // return;
+                }
+
+                let enum_scope = Scope {
+                    name: enum_name.clone(),
+                    parent: symbol_table.current_scope.clone(),
+                    symbols: HashMap::new(),
+                };
+
+                let enum_symbol = Symbol {
+                    name: enum_name.clone(),
+                    symbol_type: SymbolType::Enum,
+                    location: pair.line_col(),
+                };
+
+                symbol_table
+                    .scopes
+                    .get_mut(&symbol_table.current_scope)
+                    .unwrap()
+                    .symbols
+                    .insert(enum_name.clone(), enum_symbol);
+
+                symbol_table.scopes.insert(enum_name.clone(), enum_scope);
+
+                symbol_table.current_scope = enum_name.clone();
+            }
             // Rule::ENUM_VARIANT => todo!(),
+            Rule::IMPL_DECL => {
+                last_symbol_type = SymbolType::Impl;
 
-            // Rule::IMPL_DECL => todo!(),
+                let impl_name = flatten_pairs.next().unwrap().as_str().to_string();
+                let get_symbol =
+                    symbol_table.get_symbol(&impl_name, symbol_table.get_current_scope());
+
+                if let Some(symbol) = get_symbol {
+                    println!(
+                        "SEM_ERR: Impl `{}` already exists in scope at `{}:{}:{}`",
+                        impl_name, file_path, symbol.location.0, symbol.location.1
+                    );
+                    // return;
+                }
+
+                let impl_scope = Scope {
+                    name: impl_name.clone(),
+                    parent: symbol_table.current_scope.clone(),
+                    symbols: HashMap::new(),
+                };
+
+                let impl_symbol = Symbol {
+                    name: impl_name.clone(),
+                    symbol_type: SymbolType::Impl,
+                    location: pair.line_col(),
+                };
+
+                symbol_table
+                    .scopes
+                    .get_mut(&symbol_table.current_scope)
+                    .unwrap()
+                    .symbols
+                    .insert(impl_name.clone(), impl_symbol);
+
+                symbol_table.scopes.insert(impl_name.clone(), impl_scope);
+
+                symbol_table.current_scope = impl_name.clone();
+            }
 
             // Rule::PROGRAM_BLOCK => todo!(),
             // Rule::PROGRAM => todo!(),
             _ => {
-                println!("hmm aa baaki chhe: {:?}", pair.as_rule());
+                // println!("hmm aa baaki chhe: {:?}", pair.as_rule());
             }
         }
     }

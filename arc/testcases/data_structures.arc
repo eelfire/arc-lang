@@ -7,6 +7,7 @@ fx main() {
 
   // tuples
   let tup (i32, i64, f32) = (-5, 67, 13.);
+  let (x, y, z) = tup;
 
   let a = 4;
   let b = 5;
