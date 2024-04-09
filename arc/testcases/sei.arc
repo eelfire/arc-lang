@@ -19,14 +19,19 @@ enum EnumName {
 
 impl SomeStruct {
     fx len(&self) ~ i32 {
-        let a = add(&self.one, &self.two);
+        let length = add(&self.one, &self.two);
         return length;
     }
 }
 
-impl strings {
+impl string {
     fx len(&self) ~ i32 {
-        let a = 1;
+        let some_struct = SomeStruct {
+            one: 1,
+            two: 2.0,
+        };
+        let some_enum = EnumName.Option1;
+        let length = some_struct.one;
         return length;
     }
 }
