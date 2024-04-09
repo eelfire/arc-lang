@@ -1,0 +1,8 @@
+- RHS symbols should be checked rather than inserting them in symbol table
+- struct assign
+- struct_enum_access
+- error handling
+- precedence
+- type checking
+- import | pub
+- remove 'mod' from our language? i prefer not
