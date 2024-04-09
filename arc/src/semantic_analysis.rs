@@ -6,6 +6,9 @@ use std::collections::HashMap;
 #[allow(unused_imports)]
 use crate::parser::print_nested_pairs;
 
+// "i32" | "i64" | "f32" | "f64" | "char" | "bool" | "string"
+const BUILTIN_DATA_TYPES: [&str; 7] = ["i32", "i64", "f32", "f64", "char", "bool", "string"];
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SymbolType {
     Parameter,
@@ -206,7 +209,7 @@ fn analyze_pair_identifier(
         }
     }
 
-    println!("symbol_type: {:?}", symbol_type);
+    // println!("symbol_type: {:?}", symbol_type);
     let symbol = Symbol {
         name: node_name.clone(),
         symbol_type: symbol_type,
@@ -252,7 +255,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
     let mut last_symbol_type = SymbolType::Other;
 
     while let Some(pair) = flatten_pairs.next() {
-        // println!("{:?}", pair.as_rule());
+        // println!("{:?}\t{:?}", pair.as_rule(), pair.as_str());
         // println!("current_scope: {:?}", symbol_table.current_scope);
         // println!("flags: {:?}", &flags);
         // println!("symbol_type: {:?}", last_symbol_type);
@@ -263,7 +266,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             }
 
             Rule::SCOPE_START => {
-                println!("scope_start: {:?}", pair.as_str());
+                // println!("scope_start: {:?}", pair.as_str());
                 if *flags.get(&FlagType::FlowControl).unwrap_or(&false) {
                     let flow_control_scope_name = format!(
                         "{}_fc_{}",
@@ -313,7 +316,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             // Rule::IDENT_CHARS => todo!(),
             Rule::IDENTIFIER => {
                 // println!("IDENTIFIER: {:?}", pair);
-                println!("IDENTIFIER: {:?}", pair.as_str());
+                // println!("IDENTIFIER: {:?}", pair.as_str());
                 analyze_pair_identifier(
                     pair,
                     &mut symbol_table,
@@ -321,6 +324,9 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                     last_symbol_type.clone(),
                     file_path,
                 );
+            }
+            Rule::STRUCT_ENUM_IDENTIFIER => {
+                println!("STRUCT_ENUM_IDENTIFIER: {:?}", pair);
             }
             // Rule::KEYWORD => todo!(),
 
@@ -558,9 +564,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             }
 
             Rule::FUNCTION_DECL => {
-                last_symbol_type = SymbolType::Function;
-
-                println!("{:?}", pair.as_rule());
+                // println!("{:?}", pair.as_rule());
                 let function_name = flatten_pairs.next().unwrap().as_str().to_string();
 
                 // check if function is already in symbol table of current scope
@@ -591,18 +595,23 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                     location: pair.line_col(),
                 };
 
+                let mut key = function_name.clone();
+                if last_symbol_type == SymbolType::Impl {
+                    key = format!("{}::{}", &symbol_table.get_current_scope(), function_name);
+                }
+
                 symbol_table
                     .scopes
                     .get_mut(&symbol_table.current_scope)
                     .unwrap()
                     .symbols
-                    .insert(function_name.clone(), function_symbol);
+                    .insert(key.clone(), function_symbol);
 
-                symbol_table
-                    .scopes
-                    .insert(function_name.clone(), function_scope);
+                symbol_table.scopes.insert(key.clone(), function_scope);
 
-                symbol_table.current_scope = function_name.clone();
+                symbol_table.current_scope = key;
+
+                last_symbol_type = SymbolType::Function;
 
                 // // go back to parent scope
                 // symbol_table.current_scope = symbol_table
@@ -725,12 +734,25 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                 let get_symbol =
                     symbol_table.get_symbol(&impl_name, symbol_table.get_current_scope());
 
+                let is_builtin_data_type =
+                    BUILTIN_DATA_TYPES.iter().any(|&x| x == impl_name.as_str());
+
+                let mut is_impl_able = false;
+                if is_builtin_data_type {
+                    is_impl_able = true;
+                }
                 if let Some(symbol) = get_symbol {
+                    is_impl_able = true;
+                }
+
+                if !is_impl_able {
                     println!(
-                        "SEM_ERR: Impl `{}` already exists in scope at `{}:{}:{}`",
-                        impl_name, file_path, symbol.location.0, symbol.location.1
-                    );
-                    // return;
+                        "SEM_ERR: Impl `{}` does not exist in any scope at `{}:{}:{}`",
+                        impl_name,
+                        file_path,
+                        pair.line_col().0,
+                        pair.line_col().1
+                    )
                 }
 
                 let impl_scope = Scope {
@@ -745,16 +767,17 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                     location: pair.line_col(),
                 };
 
+                let key = format!("impl::{}", impl_name);
                 symbol_table
                     .scopes
                     .get_mut(&symbol_table.current_scope)
                     .unwrap()
                     .symbols
-                    .insert(impl_name.clone(), impl_symbol);
+                    .insert(key.clone(), impl_symbol);
 
-                symbol_table.scopes.insert(impl_name.clone(), impl_scope);
+                symbol_table.scopes.insert(key.clone(), impl_scope);
 
-                symbol_table.current_scope = impl_name.clone();
+                symbol_table.current_scope = key.clone();
             }
 
             // Rule::PROGRAM_BLOCK => todo!(),
