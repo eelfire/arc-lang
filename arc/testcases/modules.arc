@@ -1,3 +1,5 @@
+// low priority now to implement this in our compiler
+
 mod module_name {
     fx a_function() {
         let a = 1;

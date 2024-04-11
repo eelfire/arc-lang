@@ -18,6 +18,7 @@ pub fn run(file_path: &str) {
     match program {
         Ok(pairs) => {
             print_nested_pairs(&pairs, 0);
+            println!("\n\n>>> Analyzing...");
             analyze(pairs, file_path);
         }
         Err(e) => {

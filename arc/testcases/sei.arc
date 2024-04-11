@@ -30,7 +30,7 @@ impl string {
             one: 1,
             two: 2.0,
         };
-        let some_enum = EnumName.Option1;
+        let some_enum = EnumName->Option2;
         let length = some_struct.one;
         return length;
     }

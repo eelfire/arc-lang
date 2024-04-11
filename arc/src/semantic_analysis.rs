@@ -22,7 +22,8 @@ pub enum SymbolType {
     // VariableReass,
     FnCall,
     ImplAccess,
-    StructEnumAccess,
+    StructAccess,
+    EnumAccess,
     // ModAccess,
     TupAccess,
     ArrAccess,
@@ -123,7 +124,8 @@ impl SymbolTableTrait for SymbolTable {
 enum FlagType {
     Expression,
     CallStmt,
-    FlowControl,
+    // FlowControl,
+    For,
 }
 
 fn analyze_pair(pair: Pair<Rule>, symbol_table: &mut SymbolTable, file_path: &str) {
@@ -174,6 +176,10 @@ fn analyze_pair_identifier(
     //     }
     // }
 
+    // println!("flags: {:?}", &flags);
+    // println!("symbol_type: {:?}", symbol_type);
+    // println!("node_name: {:?}\n", node_name);
+
     let is_one_of_flags = flags.values().any(|x| x == &true);
     let in_current_scope = symbol_table.get_symbol(&node_name, symbol_table.get_current_scope());
     let in_parent_scope = symbol_table.get_symbol_recursive(
@@ -184,6 +190,9 @@ fn analyze_pair_identifier(
             .unwrap()
             .parent,
     );
+
+    // println!("in_current_scope: {:?}", in_current_scope);
+    // println!("in_parent_scope: {:?}\n", in_parent_scope);
 
     if is_one_of_flags {
         if in_current_scope.is_none() && in_parent_scope.is_none() {
@@ -206,20 +215,16 @@ fn analyze_pair_identifier(
                 in_current_scope.unwrap().location.1
             );
             return;
+        } else {
+            // println!("symbol_type: {:?}", symbol_type);
+            let symbol = Symbol {
+                name: node_name.clone(),
+                symbol_type: symbol_type,
+                location: pair.line_col(),
+            };
+            // println!("{:?}", symbol_table.get_current_scope());
+            symbol_table.insert_symbol(symbol);
         }
-    }
-
-    // println!("symbol_type: {:?}", symbol_type);
-    let symbol = Symbol {
-        name: node_name.clone(),
-        symbol_type: symbol_type,
-        location: pair.line_col(),
-    };
-
-    // println!("{:?}", symbol_table.get_current_scope());
-
-    if in_current_scope.is_none() {
-        symbol_table.insert_symbol(symbol);
     }
 }
 
@@ -249,7 +254,8 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
     let mut flags = HashMap::new();
     flags.insert(FlagType::Expression, false);
     flags.insert(FlagType::CallStmt, false);
-    flags.insert(FlagType::FlowControl, false);
+    // flags.insert(FlagType::FlowControl, false);
+    flags.insert(FlagType::For, false);
 
     let mut flow_control_count = 0;
     let mut last_symbol_type = SymbolType::Other;
@@ -267,33 +273,33 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
 
             Rule::SCOPE_START => {
                 // println!("scope_start: {:?}", pair.as_str());
-                if *flags.get(&FlagType::FlowControl).unwrap_or(&false) {
-                    let flow_control_scope_name = format!(
-                        "{}_fc_{}",
-                        symbol_table.get_current_scope(),
-                        flow_control_count
-                    );
-                    flow_control_count += 1;
+                // if *flags.get(&FlagType::FlowControl).unwrap_or(&false) {
+                //     let flow_control_scope_name = format!(
+                //         "{}_fc_{}",
+                //         symbol_table.get_current_scope(),
+                //         flow_control_count
+                //     );
+                //     flow_control_count += 1;
 
-                    let flow_control_scope = Scope {
-                        name: flow_control_scope_name.clone(),
-                        parent: symbol_table.current_scope.clone(),
-                        symbols: HashMap::new(),
-                    };
+                //     let flow_control_scope = Scope {
+                //         name: flow_control_scope_name.clone(),
+                //         parent: symbol_table.current_scope.clone(),
+                //         symbols: HashMap::new(),
+                //     };
 
-                    symbol_table.insert_scope(flow_control_scope);
-                    symbol_table.current_scope = flow_control_scope_name;
-                } else {
-                    // let scope_name = flatten_pairs.next().unwrap().as_str().to_string();
-                    // let scope = Scope {
-                    //     name: scope_name.clone(),
-                    //     parent: symbol_table.current_scope.clone(),
-                    //     symbols: HashMap::new(),
-                    // };
+                //     symbol_table.insert_scope(flow_control_scope);
+                //     symbol_table.current_scope = flow_control_scope_name;
+                // } else {
+                //     // let scope_name = flatten_pairs.next().unwrap().as_str().to_string();
+                //     // let scope = Scope {
+                //     //     name: scope_name.clone(),
+                //     //     parent: symbol_table.current_scope.clone(),
+                //     //     symbols: HashMap::new(),
+                //     // };
 
-                    // symbol_table.insert_scope(scope);
-                    // symbol_table.current_scope = scope_name.clone();
-                }
+                //     // symbol_table.insert_scope(scope);
+                //     // symbol_table.current_scope = scope_name.clone();
+                // }
             }
             Rule::SCOPE_END => {
                 symbol_table.current_scope = symbol_table
@@ -306,6 +312,46 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             Rule::STATEMENT_END => {
                 flags.insert(FlagType::Expression, false);
                 flags.insert(FlagType::CallStmt, false);
+            }
+            Rule::FLOW_CONTROL_START => {
+                // flags.insert(FlagType::FlowControl, true);
+                flags.insert(FlagType::Expression, false);
+                flags.insert(FlagType::CallStmt, false);
+
+                if *flags.get(&FlagType::For).unwrap_or(&false) {
+                    flags.insert(FlagType::For, false);
+                    continue;
+                }
+
+                // create scope for flow control
+                // insert flow control scope in symbol table
+
+                let flow_control_scope_name = format!(
+                    "{}_fc_{}",
+                    symbol_table.get_current_scope(),
+                    flow_control_count
+                );
+                flow_control_count += 1;
+
+                let flow_control_scope = Scope {
+                    name: flow_control_scope_name.clone(),
+                    parent: symbol_table.current_scope.clone(),
+                    symbols: HashMap::new(),
+                };
+
+                symbol_table.insert_scope(flow_control_scope);
+                symbol_table.current_scope = flow_control_scope_name;
+            }
+            Rule::FLOW_CONTROL_END => {
+                // flags.insert(FlagType::FlowControl, false);
+
+                // go back to parent scope
+                symbol_table.current_scope = symbol_table
+                    .scopes
+                    .get(&symbol_table.current_scope)
+                    .unwrap()
+                    .parent
+                    .clone();
             }
 
             // Rule::WHITESPACE => todo!(),
@@ -326,7 +372,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                 );
             }
             Rule::STRUCT_ENUM_IDENTIFIER => {
-                println!("STRUCT_ENUM_IDENTIFIER: {:?}", pair);
+                // println!("STRUCT_ENUM_IDENTIFIER: {:?}", pair);
             }
             // Rule::KEYWORD => todo!(),
 
@@ -491,7 +537,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             }
             // Rule::CONTINUE_STMT => todo!(),
             Rule::FLOW_CONTROL => {
-                flags.insert(FlagType::FlowControl, true);
+                // flags.insert(FlagType::FlowControl, true);
 
                 // FLOW_CONTROL = { IF_STATEMENT | MATCH_STATEMENT | FOR_LOOP | WHILE_LOOP }
                 // flow_control_scope_name = parent_scope_name + "_flow_control_" + flow_control_count
@@ -519,6 +565,27 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             // Rule::EXP_BLOCK => todo!(),
             // Rule::BLOCK => todo!(),
             Rule::MATCH_STATEMENT => {
+                // let flow_control_scope_name = format!(
+                //     "{}_fc_{}",
+                //     symbol_table.get_current_scope(),
+                //     flow_control_count
+                // );
+                // flow_control_count += 1;
+
+                // let flow_control_scope = Scope {
+                //     name: flow_control_scope_name.clone(),
+                //     parent: symbol_table.current_scope.clone(),
+                //     symbols: HashMap::new(),
+                // };
+
+                // symbol_table.insert_scope(flow_control_scope);
+                // symbol_table.current_scope = flow_control_scope_name;
+            }
+            // Rule::MATCH_CASE => todo!(),
+            // Rule::MATCH_DEFAULT => todo!(),
+            Rule::FOR_LOOP => {
+                flags.insert(FlagType::For, true);
+
                 let flow_control_scope_name = format!(
                     "{}_fc_{}",
                     symbol_table.get_current_scope(),
@@ -534,11 +601,22 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
 
                 symbol_table.insert_scope(flow_control_scope);
                 symbol_table.current_scope = flow_control_scope_name;
-            }
-            // Rule::MATCH_CASE => todo!(),
-            // Rule::MATCH_DEFAULT => todo!(),
 
-            // Rule::FOR_LOOP => todo!(),
+                let for_identifier = flatten_pairs.next().unwrap().as_str().to_string();
+                // insert for_identifier in flow control scope
+                let for_symbol = Symbol {
+                    name: for_identifier.clone(),
+                    symbol_type: SymbolType::Mut,
+                    location: pair.line_col(),
+                };
+
+                symbol_table
+                    .scopes
+                    .get_mut(&symbol_table.current_scope)
+                    .unwrap()
+                    .symbols
+                    .insert(for_identifier.clone(), for_symbol);
+            }
             // Rule::RANGE => todo!(),
 
             // Rule::WHILE_LOOP => todo!(),
@@ -559,8 +637,50 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             Rule::IMPL_ACCESS => {
                 last_symbol_type = SymbolType::ImplAccess;
             }
-            Rule::STRUCT_ENUM_ACCESS => {
-                last_symbol_type = SymbolType::StructEnumAccess;
+            Rule::STRUCT_ACCESS => {
+                last_symbol_type = SymbolType::StructAccess;
+            }
+            Rule::ENUM_ACCESS => {
+                last_symbol_type = SymbolType::EnumAccess;
+                // store_identifier = true;
+                // println!("STRUCT_ENUM_ACCESS: {:?}", pair);
+                let str = pair.as_str().split("->").collect::<Vec<&str>>();
+                let struct_enum_name = str[0].to_string();
+                let struct_enum_field = str[1].to_string();
+
+                let get_symbol =
+                    symbol_table.get_symbol(&struct_enum_name, &String::from("global"));
+
+                if let Some(symbol) = get_symbol {
+                    let get_field = symbol_table.get_symbol(&struct_enum_field, &struct_enum_name);
+                    if get_field.is_none() {
+                        println!(
+                            "SEM_ERR: Field `{}` does not exist in `{}` at `{}:{}`",
+                            struct_enum_field,
+                            struct_enum_name,
+                            file_path,
+                            pair.line_col().0
+                        );
+                    }
+                } else {
+                    if struct_enum_name == "self" {
+                        // println!("self");
+                    } else {
+                        println!(
+                            "SEM_ERR: Struct/Enum `{}` does not exist in any scope at `{}:{}`",
+                            struct_enum_name,
+                            file_path,
+                            pair.line_col().0
+                        );
+                    }
+                }
+
+                let struct_enum_access_pair_count = pair.clone().into_inner().flatten().count();
+
+                // skip flatten_pairs for the number of pairs in struct_enum_access
+                for _ in 0..struct_enum_access_pair_count {
+                    flatten_pairs.next();
+                }
             }
 
             Rule::FUNCTION_DECL => {
@@ -788,5 +908,6 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
         }
     }
 
+    println!("\n\n>>> Symbol Table:");
     println!("{:#?}", symbol_table);
 }
