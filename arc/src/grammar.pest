@@ -193,10 +193,11 @@ WHILE_LOOP = { "while" ~ EXPRESSION ~ BLOCK }
 
 // EXPRESSION = { TERM ~ (("+" | "-") ~ TERM)* }
 // TERM       = { FACTOR ~ (("*" | "/") ~ FACTOR)* }
-EXPRESSION = { FACTOR ~ (OPERATOR ~ FACTOR)* }
-FACTOR     = {
+EXPRESSION      = { EXPRESSION_TYPE ~ FACTOR ~ (OPERATOR ~ FACTOR)* }
+FACTOR          = {
     (bitwise_not | subtract)? ~ (TUPLE_ACCESS | ARRAY_ACCESS | LIST_ACCESS | IMPL_ACCESS | MODULE_ACCESS | STRUCT_ACCESS | ENUM_ACCESS | FUNCTION_CALL | ERROR_CHECK | DATA_TYPES ~ (a_as ~ TYPE)? | ("(" ~ EXPRESSION ~ ")"))
 }
+EXPRESSION_TYPE = { "" }
 
 // let some_struct = SomeStruct { field1: 1, field2: 2 };
 STRUCT_ASSIGN       = { IDENTIFIER ~ "{" ~ STRUCT_FIELD_ASSIGN* ~ "}" }

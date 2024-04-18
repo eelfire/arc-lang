@@ -622,8 +622,14 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             // Rule::WHILE_LOOP => todo!(),
             Rule::EXPRESSION => {
                 flags.insert(FlagType::Expression, true);
+                let mut pairs = pair.into_inner();
+                // insert rule TYPE with value ANY into expression rule in pairs
             }
             Rule::FACTOR => {}
+            Rule::EXPRESSION_TYPE => {
+                // modify pair str to "ANY"
+                println!("***{:?}", pair);
+            }
 
             Rule::TUPLE_ACCESS => {
                 last_symbol_type = SymbolType::TupAccess;
