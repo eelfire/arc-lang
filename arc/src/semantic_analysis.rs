@@ -1,4 +1,7 @@
+use crate::pair_to_tree::Node;
+use crate::pair_to_tree::Type;
 use crate::parser::Rule;
+
 use pest::iterators::Pair;
 use pest::iterators::Pairs;
 use std::collections::HashMap;
@@ -36,6 +39,7 @@ pub struct Symbol {
     name: String,
     symbol_type: SymbolType,
     location: (usize, usize),
+    type_: Option<Type>,
     // used: bool,
     // other fields...
 }
@@ -147,6 +151,7 @@ fn analyze_pair(pair: Pair<Rule>, symbol_table: &mut SymbolTable, file_path: &st
             name: node_name.clone(),
             symbol_type: SymbolType::Other,
             location: node.line_col(),
+            type_: None,
         };
 
         println!("{:?}", symbol_table.get_current_scope());
@@ -221,6 +226,7 @@ fn analyze_pair_identifier(
                 name: node_name.clone(),
                 symbol_type: symbol_type,
                 location: pair.line_col(),
+                type_: None,
             };
             // println!("{:?}", symbol_table.get_current_scope());
             symbol_table.insert_symbol(symbol);
@@ -228,11 +234,262 @@ fn analyze_pair_identifier(
     }
 }
 
-pub fn analyze(program: Pairs<Rule>, file_path: &str) {
-    loop_analyze(program, file_path);
+fn evaluate_type(pair: Pair<Rule>) -> Option<Type> {
+    let mut pairs = pair.into_inner().flatten();
+
+    let type_ = Some(Type::Any);
+    for pair in pairs {
+        match pair.as_rule() {
+            Rule::I32 => return Some(Type::I32),
+            Rule::I64 => return Some(Type::I64),
+            Rule::F32 => return Some(Type::F32),
+            Rule::F64 => return Some(Type::F64),
+            Rule::BOOL_TYPE => return Some(Type::Bool),
+            Rule::CHAR_TYPE => return Some(Type::Char),
+            Rule::STRING_TYPE => return Some(Type::String),
+            Rule::ARRAY_TYPE => {
+                // ARRAY_TYPE: "[i32;2]"
+                //     TYPE: "i32"
+                //         I32: "i32"
+                //     INTEGER: "2"
+                // Some(Type::Array(Box::new(Type::I32), 2))
+
+                let mut array_type_pairs = pair.into_inner().flatten();
+                let array_type_ = evaluate_type(array_type_pairs.next().unwrap()).unwrap();
+                let mut array_size = 0;
+                for pair in array_type_pairs {
+                    match pair.as_rule() {
+                        Rule::INTEGER => {
+                            array_size = pair.as_str().parse::<usize>().unwrap();
+                        }
+                        _ => {}
+                    };
+                }
+                return Some(Type::Array(Box::new(array_type_), array_size));
+            }
+            Rule::TUPLE_TYPE => {
+                // TUPLE_TYPE: "(i32, bool)"
+                //     TYPE: "i32"
+                //         I32: "i32"
+                //     TYPE: "bool"
+                //         BOOL_TYPE: "bool"
+                // Some(Type::Tuple(vec![Type::I32, Type::Bool]))
+
+                let mut tuple_type_pairs = pair.into_inner().flatten();
+                let mut tuple_types = vec![];
+                for tuple_type_pair in tuple_type_pairs {
+                    match tuple_type_pair.as_rule() {
+                        Rule::TYPE => tuple_types.push(evaluate_type(tuple_type_pair).unwrap()),
+                        _ => {}
+                    }
+                }
+                return Some(Type::Tuple(tuple_types));
+            }
+            Rule::LIST_TYPE => {
+                // LIST_TYPE: "<i64>"
+                //     TYPE: "i64"
+                //         I64: "i64"
+                // Some(Type::List(Box::new(Type::I64)))
+
+                let mut list_type_pairs = pair.into_inner().flatten();
+                let list_type_ = evaluate_type(list_type_pairs.next().unwrap()).unwrap();
+                return Some(Type::List(Box::new(list_type_)));
+            }
+            // Rule::RESULT_TYPE => {}
+            _ => {}
+        };
+    }
+    type_
 }
 
-fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
+fn get_type_from_symbol_table(symbol_table: &SymbolTable, symbol_name: &String) -> Option<Type> {
+    let symbol = symbol_table.get_symbol(symbol_name, &symbol_table.get_current_scope());
+    if let Some(symbol) = symbol {
+        return symbol.type_.clone();
+    }
+    None
+}
+
+fn evaluate_expression_type(pair: Pair<Rule>, symbol_table: &SymbolTable, file_path: &str) -> Type {
+    // 4
+    // 4 + 5
+    // 4 / 5
+    // 4 * 5
+    // 4 % 5
+    // 4 - 5
+    // true
+    // false
+    // 'a'
+    // "hello"
+    // (4)
+    // (4 + 5)
+    // (4 / 5)
+    // a + (b * 2)
+    // add(4, 5)
+    // add(4, 5) + 2
+    // dbg!(&pair);
+    let line_col = pair.line_col();
+    let mut pairs = pair.into_inner().flatten();
+    let mut all_the_types_in_expression = vec![];
+    let mut type_ = Type::Any;
+    while let Some(pair) = pairs.next() {
+        match pair.as_rule() {
+            Rule::INTEGER => all_the_types_in_expression.push(Type::I32),
+            Rule::FLOAT => all_the_types_in_expression.push(Type::F32),
+            Rule::BOOL => all_the_types_in_expression.push(Type::Bool),
+            Rule::CHAR => all_the_types_in_expression.push(Type::Char),
+            Rule::STRING => all_the_types_in_expression.push(Type::String),
+            Rule::IDENTIFIER => {
+                // check if identifier exists in symbol table
+                // if not, return Type::Any
+                // if exists, return the type of the identifier
+                let identifier = pair.as_str().to_string();
+                let symbol_type = get_type_from_symbol_table(&symbol_table, &identifier);
+                if let Some(symbol_type) = symbol_type {
+                    all_the_types_in_expression.push(symbol_type);
+                } else {
+                    all_the_types_in_expression.push(Type::Any);
+                }
+            }
+            Rule::ARRAY => {
+                // let arr = [1, 2, 3];
+                let mut array_pairs = pair.clone().into_inner().flatten();
+                let array_pairs_count = array_pairs.clone().count();
+                let mut array_length = 0;
+                while let Some(inner_array_pair) = array_pairs.next() {
+                    match inner_array_pair.as_rule() {
+                        Rule::INNER_EXPRESSION => array_length += 1,
+                        _ => {}
+                    }
+                }
+                // let array_pairs_count = array_pairs.clone().count();
+                let array_elements_types = evaluate_expression_type(pair, symbol_table, file_path);
+                all_the_types_in_expression
+                    .push(Type::Array(Box::new(array_elements_types), array_length));
+
+                // skip flatten_pairs for the number of pairs in array
+                for _ in 0..array_pairs_count {
+                    pairs.next();
+                }
+            }
+            Rule::FUNCTION_CALL => {
+                // check if function exists in symbol table
+                // if not, return Type::Any
+                // if exists, return the return type of the function
+                let function_name = pair.as_str().to_string();
+                let function_symbol =
+                    symbol_table.get_symbol(&function_name, &symbol_table.get_current_scope());
+                if let Some(function_symbol) = function_symbol {
+                    if function_symbol.symbol_type == SymbolType::Function {
+                        all_the_types_in_expression.push(function_symbol.type_.clone().unwrap());
+                    }
+                }
+            }
+            Rule::STRUCT_ACCESS => {
+                // check if struct exists in symbol table
+                // if not, return Type::Any
+                // if exists, return the type of the struct
+                let struct_name = pair.as_str().to_string();
+                let struct_symbol =
+                    symbol_table.get_symbol(&struct_name, &symbol_table.get_current_scope());
+                if let Some(struct_symbol) = struct_symbol {
+                    if struct_symbol.symbol_type == SymbolType::Struct {
+                        all_the_types_in_expression.push(struct_symbol.type_.clone().unwrap());
+                    }
+                }
+            }
+            Rule::ENUM_ACCESS => {
+                // check if enum exists in symbol table
+                // if not, return Type::Any
+                // if exists, return the type of the enum
+                let enum_name = pair.as_str().to_string();
+                let enum_symbol =
+                    symbol_table.get_symbol(&enum_name, &symbol_table.get_current_scope());
+                if let Some(enum_symbol) = enum_symbol {
+                    if enum_symbol.symbol_type == SymbolType::Enum {
+                        all_the_types_in_expression.push(enum_symbol.type_.clone().unwrap());
+                    }
+                }
+            }
+            Rule::TUPLE_ACCESS => {
+                // check if tuple exists in symbol table
+                // if not, return Type::Any
+                // if exists, return the type of the tuple
+                let tuple_name = pair.as_str().to_string();
+                let tuple_symbol =
+                    symbol_table.get_symbol(&tuple_name, &symbol_table.get_current_scope());
+                if let Some(tuple_symbol) = tuple_symbol {
+                    if tuple_symbol.symbol_type == SymbolType::TupAccess {
+                        all_the_types_in_expression.push(tuple_symbol.type_.clone().unwrap());
+                    }
+                }
+            }
+            Rule::ARRAY_ACCESS => {
+                // check if array exists in symbol table
+                // if not, return Type::Any
+                // if exists, return the type of the array
+                let array_access_pair = pair.clone().into_inner().flatten();
+                let array_access_pairs_count = array_access_pair.clone().count();
+                let array_name = pair.as_str().to_string();
+                let array_symbol =
+                    symbol_table.get_symbol(&array_name, &symbol_table.get_current_scope());
+                if let Some(array_symbol) = array_symbol {
+                    if array_symbol.symbol_type == SymbolType::ArrAccess {
+                        all_the_types_in_expression.push(array_symbol.type_.clone().unwrap());
+                    }
+                }
+
+                // skip flatten_pairs for the number of pairs in array
+                // for _ in 0..array_access_pairs_count {
+                //     pairs.next();
+                // }
+            }
+            Rule::LIST_ACCESS => {
+                // check if list exists in symbol table
+                // if not, return Type::Any
+                // if exists, return the type of the list
+                let list_name = pair.as_str().to_string();
+                let list_symbol =
+                    symbol_table.get_symbol(&list_name, &symbol_table.get_current_scope());
+                if let Some(list_symbol) = list_symbol {
+                    if list_symbol.symbol_type == SymbolType::ListAccess {
+                        all_the_types_in_expression.push(list_symbol.type_.clone().unwrap());
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    dbg!(&all_the_types_in_expression);
+    if all_the_types_in_expression.len() == 1 {
+        type_ = all_the_types_in_expression[0].clone();
+    } else {
+        // check if all the types in the expression are the same
+        let mut same_types = true;
+        for i in 1..all_the_types_in_expression.len() {
+            if all_the_types_in_expression[i] != all_the_types_in_expression[0] {
+                same_types = false;
+                break;
+            }
+        }
+        if same_types {
+            type_ = all_the_types_in_expression[0].clone();
+        } else {
+            // mismatch type error reporting
+            println!(
+                "SEM_ERR: Mismatched types in expression at `{}:{}:{}`",
+                file_path, line_col.0, line_col.1
+            );
+        }
+    }
+    type_
+}
+
+pub fn analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
+    loop_analyze(program, tree, file_path);
+}
+
+fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
     let mut symbol_table = SymbolTable {
         scopes: HashMap::new(),
         current_scope: String::from("global"),
@@ -259,8 +516,11 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
 
     let mut flow_control_count = 0;
     let mut last_symbol_type = SymbolType::Other;
+    let mut last_symbol_name = String::new();
+    let mut iter = 0;
 
     while let Some(pair) = flatten_pairs.next() {
+        // while let Some((i, pair)) = flatten_pairs.enumerate().next() {
         // println!("{:?}\t{:?}", pair.as_rule(), pair.as_str());
         // println!("current_scope: {:?}", symbol_table.current_scope);
         // println!("flags: {:?}", &flags);
@@ -363,6 +623,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             Rule::IDENTIFIER => {
                 // println!("IDENTIFIER: {:?}", pair);
                 // println!("IDENTIFIER: {:?}", pair.as_str());
+                last_symbol_name = pair.clone().as_str().to_string();
                 analyze_pair_identifier(
                     pair,
                     &mut symbol_table,
@@ -480,7 +741,15 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             // Rule::bitwise_or => todo!(),
             // Rule::left_shift => todo!(),
             // Rule::right_shift => todo!(),
-
+            Rule::ANY_TYPE => {
+                // modify the type_ of last inserted symbol in symbol table for the current scope
+                let current_scope = symbol_table
+                    .scopes
+                    .get_mut(&symbol_table.current_scope)
+                    .unwrap();
+                let last_symbol = current_scope.symbols.get_mut(&last_symbol_name).unwrap();
+                last_symbol.type_ = evaluate_type(pair);
+            }
             // Rule::STATEMENT => {
             //     // DECL_STMT = { MUT | IMMUT | VARIABLE_REASS };
             // }
@@ -494,6 +763,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                 // last_symbol_type = SymbolType::Other;
                 // check if variable is already in symbol table of current scope
                 let variable_name = flatten_pairs.next().unwrap().as_str().to_string();
+                iter += 1;
                 let in_current_scope =
                     symbol_table.get_symbol(&variable_name, symbol_table.get_current_scope());
                 let in_parent_scope = symbol_table.get_symbol_recursive(
@@ -603,11 +873,13 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                 symbol_table.current_scope = flow_control_scope_name;
 
                 let for_identifier = flatten_pairs.next().unwrap().as_str().to_string();
+                iter += 1;
                 // insert for_identifier in flow control scope
                 let for_symbol = Symbol {
                     name: for_identifier.clone(),
                     symbol_type: SymbolType::Mut,
                     location: pair.line_col(),
+                    type_: None,
                 };
 
                 symbol_table
@@ -622,14 +894,15 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
             // Rule::WHILE_LOOP => todo!(),
             Rule::EXPRESSION => {
                 flags.insert(FlagType::Expression, true);
-                let mut pairs = pair.into_inner();
-                // insert rule TYPE with value ANY into expression rule in pairs
+                let expression_type = evaluate_expression_type(pair, &symbol_table, file_path);
+                println!("<><><><> expression_type: {:?}", expression_type);
+
+                // store the type in the tree
+                // dbg!(&tree[iter]);
+                tree[iter].type_ = Some(expression_type);
+                // dbg!(&tree[i]);
             }
             Rule::FACTOR => {}
-            Rule::EXPRESSION_TYPE => {
-                // modify pair str to "ANY"
-                println!("***{:?}", pair);
-            }
 
             Rule::TUPLE_ACCESS => {
                 last_symbol_type = SymbolType::TupAccess;
@@ -686,12 +959,14 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                 // skip flatten_pairs for the number of pairs in struct_enum_access
                 for _ in 0..struct_enum_access_pair_count {
                     flatten_pairs.next();
+                    iter += 1;
                 }
             }
 
             Rule::FUNCTION_DECL => {
                 // println!("{:?}", pair.as_rule());
                 let function_name = flatten_pairs.next().unwrap().as_str().to_string();
+                iter += 1;
 
                 // check if function is already in symbol table of current scope
                 let already_exists = symbol_table
@@ -719,6 +994,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                     name: function_name.clone(),
                     symbol_type: SymbolType::Function,
                     location: pair.line_col(),
+                    type_: Some(Type::Function(vec![], Box::new(Type::Any))), // Type::Function(vec![]
                 };
 
                 let mut key = function_name.clone();
@@ -777,6 +1053,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                 last_symbol_type = SymbolType::Struct;
 
                 let struct_name = flatten_pairs.next().unwrap().as_str().to_string();
+                iter += 1;
                 let get_symbol =
                     symbol_table.get_symbol(&struct_name, symbol_table.get_current_scope());
 
@@ -798,6 +1075,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                     name: struct_name.clone(),
                     symbol_type: SymbolType::Struct,
                     location: pair.line_col(),
+                    type_: Some(Type::Struct(vec![])),
                 };
 
                 symbol_table
@@ -818,6 +1096,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                 last_symbol_type = SymbolType::Enum;
 
                 let enum_name = flatten_pairs.next().unwrap().as_str().to_string();
+                iter += 1;
                 let get_symbol =
                     symbol_table.get_symbol(&enum_name, symbol_table.get_current_scope());
 
@@ -839,6 +1118,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                     name: enum_name.clone(),
                     symbol_type: SymbolType::Enum,
                     location: pair.line_col(),
+                    type_: Some(Type::Enum(vec![])),
                 };
 
                 symbol_table
@@ -857,6 +1137,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                 last_symbol_type = SymbolType::Impl;
 
                 let impl_name = flatten_pairs.next().unwrap().as_str().to_string();
+                iter += 1;
                 let get_symbol =
                     symbol_table.get_symbol(&impl_name, symbol_table.get_current_scope());
 
@@ -891,6 +1172,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                     name: impl_name.clone(),
                     symbol_type: SymbolType::Impl,
                     location: pair.line_col(),
+                    type_: None,
                 };
 
                 let key = format!("impl::{}", impl_name);
@@ -912,6 +1194,7 @@ fn loop_analyze(program: Pairs<Rule>, file_path: &str) {
                 // println!("hmm aa baaki chhe: {:?}", pair.as_rule());
             }
         }
+        iter += 1;
     }
 
     println!("\n\n>>> Symbol Table:");

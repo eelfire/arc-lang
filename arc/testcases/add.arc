@@ -1,8 +1,12 @@
-pub fx add(a i32, b i32) ~ i32 {
-    let c = a + b;
-    return c;
+fx add(a i32, b i32) ~ i32 {
+    let arr = [1, 2, 3];
+    // let arr_access = arr[1];
+    // let c = a + (b * 2);
+    // let d = 5;
+    // d = 3;
+    // return c;
 }
-
+/*
 fx main() {
     let mut a = 4;
     a = 3;
@@ -11,3 +15,4 @@ fx main() {
     print("{}", c);
     let ch char = ' ';
 }
+*/

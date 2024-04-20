@@ -3,6 +3,8 @@ pub mod pair_to_tree;
 pub mod parser;
 pub mod semantic_analysis;
 pub mod token;
+pub mod tree_to_wat;
+pub mod type_system;
 
 use std::fs;
 
@@ -21,19 +23,28 @@ fn main() {
     let unparsed_file = fs::read_to_string(file_path).expect("cannot read file");
 
     let program = parser::run(&unparsed_file);
+
     let program_copy = program.clone();
+    let program_block = program_copy.unwrap().next().unwrap();
+    let mut tree = pair_to_nodes(program_block);
+    let mut flatten_tree = tree.flatten();
+    // println!("{:#?}", flatten_tree);
+
     match program {
         Ok(pairs) => {
             print_nested_pairs(&pairs, 0);
             println!("\n\n>>> Analyzing...");
-            analyze(pairs, file_path);
+            analyze(pairs, &mut flatten_tree, file_path);
         }
         Err(e) => {
             eprintln!("{}", e);
         }
     }
 
-    let program_block = program_copy.unwrap().next().unwrap();
-    let tree = pair_to_nodes(program_block);
-    // println!("{:#?}", tree);
+    type_system::infer_types(&mut flatten_tree);
+    type_system::check_types(&flatten_tree);
+    println!("{:#?}", flatten_tree);
+
+    let wat = tree_to_wat::convert_to_wat(&tree);
+    // println!("{}", wat);
 }

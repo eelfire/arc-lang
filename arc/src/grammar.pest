@@ -69,19 +69,26 @@ STRING = @{ "\"" ~ (!("\"") ~ ANY)* ~ "\"" }
 CHAR   = @{ "'" ~ ANY ~ "'" }
 // CHAR = @{"'" ~ (!("'") ~ ASCII_ALPHA) ~ "'" }
 
-TUPLE = { "(" ~ (EXPRESSION ~ ("," ~ EXPRESSION)*)? ~ ")" }
-ARRAY = { "[" ~ (EXPRESSION ~ ("," ~ EXPRESSION)*)? ~ "]" }
+TUPLE = { "(" ~ (EXPRESSION ~ ",")+ ~ EXPRESSION? ~ ")" }
+ARRAY = { "[" ~ (INNER_EXPRESSION ~ ("," ~ INNER_EXPRESSION)*)? ~ "]" }
 LIST  = { "<" ~ (EXPRESSION ~ ("," ~ EXPRESSION)*)? ~ ">" }
 
 DATA_TYPES = { TUPLE | ARRAY | LIST | FLOAT | INTEGER | STRING | CHAR | BOOL | IDENTIFIER }
 
-TYPE        = { TUPLE_TYPE | ARRAY_TYPE | LIST_TYPE | RESULT_TYPE | "i32" | "i64" | "f32" | "f64" | "char" | "bool" | "string" }
+I32         = { "i32" }
+I64         = { "i64" }
+F32         = { "f32" }
+F64         = { "f64" }
+CHAR_TYPE   = { "char" }
+BOOL_TYPE   = { "bool" }
+STRING_TYPE = { "string" }
+TYPE        = { TUPLE_TYPE | ARRAY_TYPE | LIST_TYPE | RESULT_TYPE | I32 | I64 | F32 | F64 | CHAR_TYPE | BOOL_TYPE | STRING_TYPE }
 TUPLE_TYPE  = { "(" ~ (TYPE ~ ("," ~ TYPE)*)? ~ ")" }
 ARRAY_TYPE  = { "[" ~ TYPE ~ ";" ~ INTEGER ~ "]" }
 LIST_TYPE   = { "<" ~ TYPE ~ ">" }
 RESULT_TYPE = { ("result<" | "Result<") ~ ANY_TYPE ~ "," ~ ANY_TYPE ~ ">" }
 
-ANY_TYPE = @{ TYPE | IDENTIFIER }
+ANY_TYPE = { TYPE | IDENTIFIER }
 
 OPERATOR = {
     OPERATOR_LEVEL_1
@@ -193,11 +200,11 @@ WHILE_LOOP = { "while" ~ EXPRESSION ~ BLOCK }
 
 // EXPRESSION = { TERM ~ (("+" | "-") ~ TERM)* }
 // TERM       = { FACTOR ~ (("*" | "/") ~ FACTOR)* }
-EXPRESSION      = { EXPRESSION_TYPE ~ FACTOR ~ (OPERATOR ~ FACTOR)* }
-FACTOR          = {
-    (bitwise_not | subtract)? ~ (TUPLE_ACCESS | ARRAY_ACCESS | LIST_ACCESS | IMPL_ACCESS | MODULE_ACCESS | STRUCT_ACCESS | ENUM_ACCESS | FUNCTION_CALL | ERROR_CHECK | DATA_TYPES ~ (a_as ~ TYPE)? | ("(" ~ EXPRESSION ~ ")"))
+EXPRESSION       = { FACTOR ~ (OPERATOR ~ FACTOR)* }
+INNER_EXPRESSION = { FACTOR ~ (OPERATOR ~ FACTOR)* }
+FACTOR           = {
+    (bitwise_not | subtract)? ~ (TUPLE_ACCESS | ARRAY_ACCESS | LIST_ACCESS | IMPL_ACCESS | MODULE_ACCESS | STRUCT_ACCESS | ENUM_ACCESS | FUNCTION_CALL | ERROR_CHECK | DATA_TYPES ~ (a_as ~ TYPE)? | ("(" ~ INNER_EXPRESSION ~ ")"))
 }
-EXPRESSION_TYPE = { "" }
 
 // let some_struct = SomeStruct { field1: 1, field2: 2 };
 STRUCT_ASSIGN       = { IDENTIFIER ~ "{" ~ STRUCT_FIELD_ASSIGN* ~ "}" }
