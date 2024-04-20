@@ -29,6 +29,18 @@ fx flow_control() {
         c = b;
     }
 
+    if a < b {
+        if b < c {
+            a = b;
+        } else {
+            if c < d {
+                c = d;
+            }
+        }
+    } else {
+        a -= b;
+    }
+
     while c > 0 {
         c -= 1;
     }

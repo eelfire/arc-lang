@@ -176,13 +176,13 @@ raw_string = "`" { unicode_value } "`" .
 
 ## Variables
 
-All variables are _immutable_ by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.  
+All variables are _immutable_ by default and mutability for a variable can be added using the `mut` keyword after the `let` keyword. A variable can be assigned a value at the time of declaration in which case the type is optional and can be inferred.
 Variables names must follow the following rules:
 
-1) Must not be a keyword as defined in the _Keywords_ section.  
-2) Must start with a letter or an underscore and must not start with digit (For example, Valid--> `_myVar`, Invalid--> `1one`).
-3) Must only contain alpha-numeric characters along with the underscore.
-4) Are case-sensitive.  
+1. Must not be a keyword as defined in the _Keywords_ section.
+2. Must start with a letter or an underscore and must not start with digit (For example, Valid--> `_myVar`, Invalid--> `1one`).
+3. Must only contain alpha-numeric characters along with the underscore.
+4. Are case-sensitive.
 
 ```rust
 let x = 23;
@@ -235,7 +235,7 @@ let big_s = s + " How are you?"; // concatenation
 ```
 
 `str.len()`
-This returns a non negative integer as the length of the string (number of chars).  
+This returns a non negative integer as the length of the string (number of chars).
 
 `str[M:N]`
 This returns the slice of the string from index M, to index N-1. The returned type is also an string.
@@ -257,15 +257,15 @@ let array_name [element_type; len] = [element1, element2...];
 #### Features
 
 `array.len()`
-This returns a non negative integer as the length of the array (number of elements).  
+This returns a non negative integer as the length of the array (number of elements).
 
 `array[M]`
-This returns the element in the array at the Mth index.  
+This returns the element in the array at the Mth index.
 
 `array[M:N]`
-This returns the slice of the array from index M, to index N-1. The returned type is also an array.  
+This returns the slice of the array from index M, to index N-1. The returned type is also an array.
 
-#### Examples  
+#### Examples
 
 ```rust
 let arr [u32; 3] = [1, 2, 3];
@@ -291,13 +291,13 @@ let tuple_name (element_type, size) = (element1, element2...);
 #### Features
 
 `tuple.len()`
-This returns a non negative integer as the length of the tuple (number of elements).  
+This returns a non negative integer as the length of the tuple (number of elements).
 
 `tuple.M`
-This returns the element in the tuple at the Mth index.  
+This returns the element in the tuple at the Mth index.
 
 `let (element1, element2...) = tuple;`
-The tuple type also supports unpacking (destructuring) as shown in the example.  
+The tuple type also supports unpacking (destructuring) as shown in the example.
 
 #### Examples
 
@@ -323,13 +323,13 @@ let list_name element_type = <element1, element2...>;
 #### Features
 
 `list.len()`
-This returns a non negative integer as the length of the list (number of elements).  
+This returns a non negative integer as the length of the list (number of elements).
 
 `list[M]`
-This returns the element in the list at the Mth index.  
+This returns the element in the list at the Mth index.
 
 `list[M:N]`
-This returns the slice of the array from index M, to index N-1. The returned type is also an array.  
+This returns the slice of the array from index M, to index N-1. The returned type is also an array.
 
 `list.push(element)`
 This appends element to the end of the list, as the lists do not have a fixed size and can grow from both directions.
@@ -376,7 +376,7 @@ Variables defined inside a block statment are scoped to itself and cannot be acc
 
 ```rust
 for variable in range_expression {}
-    
+
 while condition {}
 
 if condition1 {} else if condition2 {} else {}
@@ -392,9 +392,9 @@ match expression {
 
 Special keywords such as `break`, `continue` and `return` are used arbitrarily jump out of loops to manipulate the execution flow.
 
-- `break` jumps out of the iteration.  
-- `continue` skips the iteration.  
-- `return` exits functions and return a value to the caller.  
+- `break` jumps out of the iteration.
+- `continue` skips the iteration.
+- `return` exits functions and return a value to the caller.
 - `if - else if - else` and `match` conditionals can have return value.
 
 #### Examples
@@ -474,7 +474,7 @@ let multiply = fx(x, y) {
 
 Exceptions can occur during the runtime of a program, causing the program to exhibit an undefined behaviour. The programmer can handle these exceptions by using the `Result<success_type, error>`. Furthermore, `ok` and `err` can be used to return the success and error values respectively. `if let` syntax is used to destructure the result.
 
-#### Examples  
+#### Examples
 
 ```rust
 let res = fx() ~ result<u32, string> {
@@ -570,11 +570,11 @@ fx private(b u64) ~ bool { // this function is private
 
 ```rust
 struct StructName {
-    field1: u32,
-    field2: u32,
-    field3: i32,
-    field4: SomeStruct,
-    field5: SomeEnum,
+    field1 u32,
+    field2 u32,
+    field3 i32,
+    field4 SomeStruct,
+    field5 SomeEnum,
 }
 
 enum EnumName {
