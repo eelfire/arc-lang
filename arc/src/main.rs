@@ -3,7 +3,7 @@ pub mod pair_to_tree;
 pub mod parser;
 pub mod semantic_analysis;
 pub mod token;
-pub mod tree_to_wasm;
+// pub mod tree_to_wasm;
 pub mod tree_to_wat;
 pub mod type_system;
 
@@ -47,10 +47,10 @@ fn main() {
     // println!("{:#?}", flatten_tree);
 
     let tree = unflatten(&tree, flatten_tree);
-    println!("{:#?}", tree);
+    println!("\nType annotated tree:\n{:#?}", tree);
 
     let wat = tree_to_wat::convert_to_wat(&tree);
-    println!("{}", wat);
+    // println!("{}", wat);
 
     // let wasm = tree_to_wasm::convert_to_wasm(&flatten_tree);
     // let wasm_file_path = format!("{}.wasm", file_path);

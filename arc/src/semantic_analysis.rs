@@ -460,7 +460,7 @@ fn evaluate_expression_type(pair: Pair<Rule>, symbol_table: &SymbolTable, file_p
             _ => {}
         }
     }
-    dbg!(&all_the_types_in_expression);
+    // dbg!(&all_the_types_in_expression);
     if all_the_types_in_expression.len() == 1 {
         type_ = all_the_types_in_expression[0].clone();
     } else {
@@ -896,7 +896,7 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
             Rule::EXPRESSION => {
                 flags.insert(FlagType::Expression, true);
                 let expression_type = evaluate_expression_type(pair, &symbol_table, file_path);
-                println!("<><><><> expression_type: {:?}", expression_type);
+                // println!("<><><><> expression_type: {:?}", expression_type);
 
                 // store the type in the tree
                 // dbg!(&tree[iter]);
