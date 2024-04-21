@@ -9,6 +9,7 @@ edition = "2021"
 pest = "2.7.8"
 pest_derive = "2.7.8"
 wasm-encoder = "0.205.0"
+wasmparser = "0.205.0"
 
 # ADDED BY MITHIL JUST FOR FUN!!! TO BE REMOVED.
 
