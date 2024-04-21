@@ -2,7 +2,7 @@
 
 use wasm_encoder::{
     CodeSection, ExportKind, ExportSection, Function, FunctionSection, Instruction, MemArg,
-    MemorySection, MemoryType, Module, TableSection, TableType, TypeSection, TypeSection, ValType,
+    MemorySection, MemoryType, Module, TableSection, TableType, TypeSection, ValType,
 };
 
 use crate::pair_to_tree::Node;
@@ -15,8 +15,8 @@ pub fn convert_to_wasm(tree: &Node) -> Vec<u8> {
     let mut code_section = CodeSection::new();
     let mut export_section = ExportSection::new();
 
-    let mut function_types = vec![];
-    let mut function_bodies = vec![];
+    // let mut function_types = vec![];
+    // let mut function_bodies = vec![];
     let mut function_index = 0;
 
     // states
