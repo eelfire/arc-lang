@@ -3,12 +3,13 @@ pub mod pair_to_tree;
 pub mod parser;
 pub mod semantic_analysis;
 pub mod token;
+pub mod tree_to_wasm;
 pub mod tree_to_wat;
 pub mod type_system;
 
 use std::fs;
 
-use crate::pair_to_tree::pair_to_nodes;
+use crate::pair_to_tree::{pair_to_nodes, unflatten};
 use crate::parser::print_nested_pairs;
 use crate::semantic_analysis::analyze;
 
@@ -43,8 +44,14 @@ fn main() {
 
     type_system::infer_types(&mut flatten_tree);
     type_system::check_types(&flatten_tree);
-    println!("{:#?}", flatten_tree);
+    // println!("{:#?}", flatten_tree);
+
+    let tree = unflatten(&tree, flatten_tree);
+    println!("{:#?}", tree);
 
     let wat = tree_to_wat::convert_to_wat(&tree);
-    // println!("{}", wat);
+    println!("{}", wat);
+
+    // let wasm = tree_to_wasm::convert_to_wasm(&flatten_tree);
+    // let wasm_file_path = format!("{}.wasm", file_path);
 }
