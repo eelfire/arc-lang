@@ -57,3 +57,27 @@ pub fn pair_to_nodes(pair: Pair<Rule>) -> Node {
         type_: None,
     }
 }
+
+// unflatten a flatten tree: take tree (Node) as template, and flatten_tree (Vec<Node>) as input
+// create new Node with template of tree but values from flatten_tree
+pub fn unflatten(tree: &Node, flatten_tree: Vec<Node>) -> Node {
+    let mut tree = tree.clone();
+    let mut flatten_tree = flatten_tree.into_iter();
+    flatten_tree.next();
+    let mut new_children = vec![];
+    for child in &tree.children {
+        if child.children.is_empty() {
+            let next = flatten_tree.next();
+            if let Some(next) = next {
+                let mut new_child = child.clone();
+                new_child.text = next.text.clone();
+                new_child.type_ = next.type_.clone();
+                new_children.push(new_child);
+            }
+        } else {
+            new_children.push(unflatten(child, flatten_tree.by_ref().collect()));
+        }
+    }
+    tree.children = new_children;
+    tree
+}
