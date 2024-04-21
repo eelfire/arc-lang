@@ -749,6 +749,7 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
                     .unwrap();
                 let last_symbol = current_scope.symbols.get_mut(&last_symbol_name).unwrap();
                 last_symbol.type_ = evaluate_type(pair);
+                tree[iter - 1].type_ = last_symbol.type_.clone();
             }
             // Rule::STATEMENT => {
             //     // DECL_STMT = { MUT | IMMUT | VARIABLE_REASS };
