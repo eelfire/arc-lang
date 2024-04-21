@@ -1,8 +1,9 @@
 // pest pair to tree
 
-use core::slice::Iter;
+use std::ops::{Deref, DerefMut};
 
 use crate::parser::Rule;
+use crate::semantic_analysis::SymbolType;
 use pest::iterators::Pair;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -59,19 +60,24 @@ pub fn pair_to_nodes(pair: Pair<Rule>) -> Node {
 
 // unflatten a flatten tree: take tree (Node) as template, and flatten_tree (Vec<Node>) as input
 // create new Node with template of tree but values from flatten_tree
-pub fn unflatten(node: &Node, flatten_tree_iter: &mut Iter<Node>) -> Node {
-    let mut new_node = node.clone();
-
-    if let Some(flatten_node) = flatten_tree_iter.next() {
-        new_node.rule = flatten_node.rule.clone();
-        new_node.text = flatten_node.text.clone();
-        new_node.type_ = flatten_node.type_.clone();
+pub fn unflatten(tree: &Node, flatten_tree: Vec<Node>) -> Node {
+    let mut tree = tree.clone();
+    let mut flatten_tree = flatten_tree.into_iter();
+    flatten_tree.next();
+    let mut new_children = vec![];
+    for child in &tree.children {
+        if child.children.is_empty() {
+            let next = flatten_tree.next();
+            if let Some(next) = next {
+                let mut new_child = child.clone();
+                new_child.text = next.text.clone();
+                new_child.type_ = next.type_.clone();
+                new_children.push(new_child);
+            }
+        } else {
+            new_children.push(unflatten(child, flatten_tree.by_ref().collect()));
+        }
     }
-
-    for child in &mut new_node.children {
-        *child = unflatten(&child, flatten_tree_iter);
-        // flatten_tree_iter.next();
-    }
-
-    new_node
+    tree.children = new_children;
+    tree
 }
