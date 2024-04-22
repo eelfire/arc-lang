@@ -57,7 +57,7 @@ fn main() {
     let wat = tree_to_wat::convert_to_wat(&tree);
     // println!("{}", wat);
 
-    let wasm = tree_to_wasm::convert_to_wasm(&tree);
+    let wasm = tree_to_wasm::convert_to_wasm(&tree, &symbol_table);
     let wasm_file_path = format!(
         "../question/wasm/{}.wasm",
         file_path
@@ -70,5 +70,5 @@ fn main() {
     );
     fs::write(wasm_file_path, wasm).expect("Unable to write file");
 
-    tree_to_wasm::demo();
+    // tree_to_wasm::demo();
 }

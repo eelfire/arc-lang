@@ -41,6 +41,7 @@ pub struct Symbol {
     pub symbol_type: SymbolType,
     pub location: (usize, usize),
     pub type_: Option<Type>,
+    pub index: Option<usize>,
     // used: bool,
     // other fields...
 }
@@ -139,6 +140,7 @@ fn analyze_pair_identifier(
     flags: &HashMap<FlagType, bool>,
     symbol_type: SymbolType,
     file_path: &str,
+    index: &mut usize,
 ) {
     let node_name = pair.as_str().to_string();
 
@@ -195,11 +197,19 @@ fn analyze_pair_identifier(
             return;
         } else {
             // println!("symbol_type: {:?}", symbol_type);
+            let s_index = match symbol_type {
+                SymbolType::Parameter | SymbolType::Immut | SymbolType::Mut => {
+                    *index += 1;
+                    Some(*index - 1)
+                }
+                _ => None,
+            };
             let symbol = Symbol {
                 name: node_name.clone(),
                 symbol_type: symbol_type,
                 location: pair.line_col(),
                 type_: None,
+                index: s_index,
             };
             // println!("{:?}", symbol_table.get_current_scope());
             symbol_table.insert_symbol(symbol);
@@ -537,6 +547,7 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> 
     let mut iter = 0;
     let mut parameters_list = vec![];
     let mut return_type = Some(Type::Any);
+    let mut index = 0;
 
     while let Some(pair) = flatten_pairs.next() {
         // while let Some((i, pair)) = flatten_pairs.enumerate().next() {
@@ -587,6 +598,8 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> 
                     .unwrap()
                     .parent
                     .clone();
+
+                index = 0;
             }
             Rule::STATEMENT_END => {
                 flags.insert(FlagType::Expression, false);
@@ -631,6 +644,8 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> 
                     .unwrap()
                     .parent
                     .clone();
+
+                index = 0;
             }
 
             // Rule::WHITESPACE => todo!(),
@@ -649,6 +664,7 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> 
                     &flags,
                     last_symbol_type.clone(),
                     file_path,
+                    &mut index,
                 );
             }
             Rule::STRUCT_ENUM_IDENTIFIER => {
@@ -904,6 +920,7 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> 
                     symbol_type: SymbolType::Mut,
                     location: pair.line_col(),
                     type_: None,
+                    index: Some(index),
                 };
 
                 symbol_table
@@ -1031,6 +1048,7 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> 
                     symbol_type: SymbolType::Function,
                     location: pair.line_col(),
                     type_: Some(Type::Function(vec![], Box::new(Type::Any))), // Type::Function(vec![]
+                    index: None,
                 };
 
                 let mut key = function_name.clone();
@@ -1146,6 +1164,7 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> 
                     symbol_type: SymbolType::Struct,
                     location: pair.line_col(),
                     type_: Some(Type::Struct(vec![])),
+                    index: None,
                 };
 
                 symbol_table
@@ -1189,6 +1208,7 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> 
                     symbol_type: SymbolType::Enum,
                     location: pair.line_col(),
                     type_: Some(Type::Enum(vec![])),
+                    index: None,
                 };
 
                 symbol_table
@@ -1243,6 +1263,7 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> 
                     symbol_type: SymbolType::Impl,
                     location: pair.line_col(),
                     type_: None,
+                    index: None,
                 };
 
                 let key = format!("impl::{}", impl_name);

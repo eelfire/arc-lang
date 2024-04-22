@@ -290,8 +290,38 @@ fn hash_identifier(node: &Node) -> u32 {
     hash
 }
 
+fn get_index_of_identifier(
+    identifier: &String,
+    symbol_table: &SymbolTable,
+    current_scope: &String,
+) -> u32 {
+    println!("{} in scope {}", identifier, current_scope);
+    let index = symbol_table
+        .scopes
+        .get(current_scope)
+        .unwrap()
+        .symbols
+        .get(identifier)
+        .unwrap();
+    index.index.unwrap() as u32
+}
+
+// fn expression_reorder_to_postfix(node: &Node) -> Node {
+//     // recursively reorder expression to postfix
+//     // a + b * c -> a b c * +
+//     // a + b * c / d -> a b c * d / +
+
+//     // if node is expression
+//     // if node is operator
+//     // - if node is factor
+//     // --- if node is identifier
+//     // --- if node is number/char/string/bool
+// }
+
 fn visit_node(
     node: &Node,
+    symbol_table: &SymbolTable,
+    current_scope: &mut String,
     module: &mut Module,
     type_section: &mut TypeSection,
     function_section: &mut FunctionSection,
@@ -305,6 +335,7 @@ fn visit_node(
     f: &mut Function,
 ) {
     // println!("{:?}", node.rule);
+    let mut needs_visit = true;
     match node.rule {
         Rule::PARAMETER => {
             *last_symbol_type = SymbolType::Parameter;
@@ -353,8 +384,65 @@ fn visit_node(
         Rule::LIST_ACCESS => {
             *last_symbol_type = SymbolType::ListAccess;
         }
-        Rule::EXPRESSION => {
+        Rule::EXPRESSION | Rule::INNER_EXPRESSION => {
             *last_symbol_type = SymbolType::Expression;
+
+            if let [left, op, right] = &node.children[..] {
+                // code using left, op, and right
+                visit_node(
+                    left,
+                    symbol_table,
+                    current_scope,
+                    module,
+                    type_section,
+                    function_section,
+                    code_section,
+                    export_section,
+                    function_index,
+                    last_symbol_type,
+                    types,
+                    functions,
+                    exports,
+                    f,
+                );
+                visit_node(
+                    right,
+                    symbol_table,
+                    current_scope,
+                    module,
+                    type_section,
+                    function_section,
+                    code_section,
+                    export_section,
+                    function_index,
+                    last_symbol_type,
+                    types,
+                    functions,
+                    exports,
+                    f,
+                );
+
+                needs_visit = false;
+
+                match op.children[0].children[0].rule {
+                    Rule::add => {
+                        f.instruction(&Instruction::I32Add);
+                    }
+                    Rule::subtract => {
+                        f.instruction(&Instruction::I32Sub);
+                    }
+                    Rule::multiply => {
+                        f.instruction(&Instruction::I32Mul);
+                    }
+                    Rule::divide => {
+                        f.instruction(&Instruction::I32DivS);
+                    }
+                    Rule::remainder => {
+                        f.instruction(&Instruction::I32RemS);
+                    }
+                    _ => {}
+                }
+            }
         }
 
         Rule::IDENTIFIER => {
@@ -374,15 +462,24 @@ fn visit_node(
                 SymbolType::Function => {
                     // add function to export
                     exports.push((node.text.clone(), ExportKind::Func));
+                    *current_scope = node.text.clone();
                 }
                 // SymbolType::Struct => todo!(),
                 // SymbolType::Enum => todo!(),
                 // SymbolType::Impl => todo!(),
                 SymbolType::Mut => {
-                    f.instruction(&Instruction::LocalSet(hash_identifier(node)));
+                    f.instruction(&Instruction::LocalSet(get_index_of_identifier(
+                        &symbol,
+                        symbol_table,
+                        current_scope,
+                    )));
                 }
                 SymbolType::Immut => {
-                    f.instruction(&Instruction::LocalSet(hash_identifier(node)));
+                    f.instruction(&Instruction::LocalSet(get_index_of_identifier(
+                        &symbol,
+                        symbol_table,
+                        current_scope,
+                    )));
                 }
                 // SymbolType::FnCall => todo!(),
                 // SymbolType::ImplAccess => todo!(),
@@ -392,29 +489,50 @@ fn visit_node(
                 // SymbolType::ArrAccess => todo!(),
                 // SymbolType::ListAccess => todo!(),
                 SymbolType::Expression => {
-                    f.instruction(&Instruction::LocalGet(hash_identifier(node)));
+                    f.instruction(&Instruction::LocalGet(get_index_of_identifier(
+                        &symbol,
+                        symbol_table,
+                        current_scope,
+                    )));
                 }
                 // SymbolType::Other => todo!(),
                 _ => {}
             }
         }
 
-        Rule::multiply => {
-            f.instruction(&Instruction::I32Mul);
+        Rule::INTEGER => {
+            f.instruction(&Instruction::I32Const(node.text.parse().unwrap()));
         }
-        Rule::divide => {
-            f.instruction(&Instruction::I32DivS);
+        Rule::FLOAT => {
+            f.instruction(&Instruction::F32Const(node.text.parse().unwrap()));
         }
-        Rule::remainder => {
-            f.instruction(&Instruction::I32RemS);
+        Rule::CHAR => {
+            f.instruction(&Instruction::I32Const(
+                node.text.chars().next().unwrap() as i32
+            ));
         }
-        Rule::add => {
-            f.instruction(&Instruction::I32Add);
+        Rule::STRING => {
+            // f.instruction(&Instruction::I32Const(node.text.chars().next().unwrap() as i32));
         }
-        Rule::subtract => {
-            f.instruction(&Instruction::I32Sub);
+        Rule::BOOL => {
+            f.instruction(&Instruction::I32Const(node.text.parse().unwrap()));
         }
 
+        // Rule::multiply => {
+        //     f.instruction(&Instruction::I32Mul);
+        // }
+        // Rule::divide => {
+        //     f.instruction(&Instruction::I32DivS);
+        // }
+        // Rule::remainder => {
+        //     f.instruction(&Instruction::I32RemS);
+        // }
+        // Rule::add => {
+        //     f.instruction(&Instruction::I32Add);
+        // }
+        // Rule::subtract => {
+        //     f.instruction(&Instruction::I32Sub);
+        // }
         Rule::SCOPE_END => {
             f.instruction(&Instruction::End);
 
@@ -432,25 +550,30 @@ fn visit_node(
             // println!(">>> {:?}", node.rule);
         }
     }
-    for child in &node.children {
-        visit_node(
-            child,
-            module,
-            type_section,
-            function_section,
-            code_section,
-            export_section,
-            function_index,
-            last_symbol_type,
-            types,
-            functions,
-            exports,
-            f,
-        );
+    // println!(">> f: {:?}", f);
+    if needs_visit {
+        for child in &node.children {
+            visit_node(
+                child,
+                symbol_table,
+                current_scope,
+                module,
+                type_section,
+                function_section,
+                code_section,
+                export_section,
+                function_index,
+                last_symbol_type,
+                types,
+                functions,
+                exports,
+                f,
+            );
+        }
     }
 }
 
-pub fn convert_to_wasm(tree: &Node) -> Vec<u8> {
+pub fn convert_to_wasm(tree: &Node, symbol_table: &SymbolTable) -> Vec<u8> {
     let mut module = Module::new();
     let mut type_section = TypeSection::new();
     let mut function_section = FunctionSection::new();
@@ -461,6 +584,7 @@ pub fn convert_to_wasm(tree: &Node) -> Vec<u8> {
     // generation context
 
     let mut last_symbol_type = SymbolType::Other;
+    let mut current_scope = String::from("global");
     let mut types = vec![];
     let mut functions = vec![];
     let mut exports = vec![];
@@ -468,6 +592,8 @@ pub fn convert_to_wasm(tree: &Node) -> Vec<u8> {
     // visit nodes
     visit_node(
         tree,
+        symbol_table,
+        &mut current_scope,
         &mut module,
         &mut type_section,
         &mut function_section,
