@@ -132,34 +132,6 @@ enum FlagType {
     For,
 }
 
-fn analyze_pair(pair: Pair<Rule>, symbol_table: &mut SymbolTable, file_path: &str) {
-    let pairs = pair.into_inner();
-    for a_pair in pairs {
-        let node = a_pair.into_inner().next().unwrap();
-        let node_name = node.as_str().to_string();
-
-        if let Some(symbol) = symbol_table.get_symbol(&node_name, symbol_table.get_current_scope())
-        {
-            println!(
-                "SEM_ERR: `{}` already exists in scope at `{}:{}:{}`",
-                node_name, file_path, symbol.location.0, symbol.location.1
-            );
-            return;
-        }
-
-        let symbol = Symbol {
-            name: node_name.clone(),
-            symbol_type: SymbolType::Other,
-            location: node.line_col(),
-            type_: None,
-        };
-
-        println!("{:?}", symbol_table.get_current_scope());
-
-        symbol_table.insert_symbol(symbol);
-    }
-}
-
 fn analyze_pair_identifier(
     pair: Pair<Rule>,
     symbol_table: &mut SymbolTable,
@@ -235,7 +207,7 @@ fn analyze_pair_identifier(
 }
 
 fn evaluate_type(pair: Pair<Rule>) -> Option<Type> {
-    let mut pairs = pair.into_inner().flatten();
+    let pairs = pair.into_inner().flatten();
 
     let type_ = Some(Type::Any);
     for pair in pairs {
@@ -296,6 +268,16 @@ fn evaluate_type(pair: Pair<Rule>) -> Option<Type> {
                 return Some(Type::List(Box::new(list_type_)));
             }
             // Rule::RESULT_TYPE => {}
+            Rule::RETURN_TYPE => {
+                // RETURN_TYPE: "~ i32"
+                //     TYPE: "i32"
+                //         I32: "i32"
+                // Some(Type::I32)
+
+                let mut return_type_pairs = pair.into_inner().flatten();
+                let return_type_ = evaluate_type(return_type_pairs.next().unwrap()).unwrap();
+                return Some(return_type_);
+            }
             _ => {}
         };
     }
@@ -370,6 +352,37 @@ fn evaluate_expression_type(pair: Pair<Rule>, symbol_table: &SymbolTable, file_p
                 // skip flatten_pairs for the number of pairs in array
                 for _ in 0..array_pairs_count {
                     pairs.next();
+                }
+            }
+            Rule::LIST => {
+                // let list = <1, 2, 3>;
+                let mut list_pairs = pair.clone().into_inner().flatten();
+                let list_pairs_count = list_pairs.clone().count();
+                let mut list_length = 0;
+                while let Some(inner_list_pair) = list_pairs.next() {
+                    match inner_list_pair.as_rule() {
+                        Rule::INNER_EXPRESSION => list_length += 1,
+                        _ => {}
+                    }
+                }
+                // let list_pairs_count = list_pairs.clone().count();
+                let list_elements_types = evaluate_expression_type(pair, symbol_table, file_path);
+                all_the_types_in_expression.push(Type::List(Box::new(list_elements_types)));
+
+                // skip flatten_pairs for the number of pairs in list
+                for _ in 0..list_pairs_count {
+                    pairs.next();
+                }
+            }
+            Rule::RETURN_TYPE => {
+                // check if return type exists in symbol table
+                // if not, return Type::Any
+                // if exists, return the type of the return type
+                let return_type = pair.as_str().to_string();
+                let return_type_symbol =
+                    symbol_table.get_symbol(&return_type, &symbol_table.get_current_scope());
+                if let Some(return_type_symbol) = return_type_symbol {
+                    all_the_types_in_expression.push(return_type_symbol.type_.clone().unwrap());
                 }
             }
             Rule::FUNCTION_CALL => {
@@ -448,6 +461,8 @@ fn evaluate_expression_type(pair: Pair<Rule>, symbol_table: &SymbolTable, file_p
                 // check if list exists in symbol table
                 // if not, return Type::Any
                 // if exists, return the type of the list
+                let list_access_pair = pair.clone().into_inner().flatten();
+                let list_access_pairs_count = list_access_pair.clone().count();
                 let list_name = pair.as_str().to_string();
                 let list_symbol =
                     symbol_table.get_symbol(&list_name, &symbol_table.get_current_scope());
@@ -518,6 +533,8 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
     let mut last_symbol_type = SymbolType::Other;
     let mut last_symbol_name = String::new();
     let mut iter = 0;
+    let mut parameters_list = vec![];
+    let mut return_type = Some(Type::Any);
 
     while let Some(pair) = flatten_pairs.next() {
         // while let Some((i, pair)) = flatten_pairs.enumerate().next() {
@@ -750,6 +767,10 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
                 let last_symbol = current_scope.symbols.get_mut(&last_symbol_name).unwrap();
                 last_symbol.type_ = evaluate_type(pair);
                 tree[iter - 1].type_ = last_symbol.type_.clone();
+
+                if last_symbol_type == SymbolType::Parameter {
+                    parameters_list.push(last_symbol.type_.clone().unwrap());
+                }
             }
             // Rule::STATEMENT => {
             //     // DECL_STMT = { MUT | IMMUT | VARIABLE_REASS };
@@ -905,6 +926,18 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
             }
             Rule::FACTOR => {}
 
+            Rule::RETURN_TYPE => {
+                return_type = evaluate_type(pair);
+                // println!("return_type: {:?}", return_type);
+                // store the return type in the tree
+                tree[iter].type_ = return_type.clone();
+            }
+            Rule::RETURN_STMT => {
+                // check if return type matches the return type of the function
+                // if not, return type mismatch error
+                // if matches, continue
+            }
+
             Rule::TUPLE_ACCESS => {
                 last_symbol_type = SymbolType::TupAccess;
             }
@@ -1024,14 +1057,48 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
                 //     .parent
                 //     .clone();
             }
-            // Rule::PARAMETER_LIST => todo!(),
+            // Rule::PARAMETER_LIST => {}
             Rule::PARAMETER => {
                 last_symbol_type = SymbolType::Parameter;
             }
             // Rule::RETURN_TYPE => todo!(),
             // Rule::RETURN_STMT => todo!(),
+            Rule::FUNCTION_BODY => {
+                // update the type of the function in the symbol table with Function(parameters_list, return_type) in parent scope
+                let parent_scope = symbol_table
+                    .scopes
+                    .get(&symbol_table.current_scope)
+                    .unwrap()
+                    .parent
+                    .clone();
 
-            // Rule::FUNCTION_BODY => todo!(),
+                let function_symbol = symbol_table
+                    .scopes
+                    .get_mut(&parent_scope)
+                    .unwrap()
+                    .symbols
+                    .get_mut(&symbol_table.current_scope)
+                    .unwrap();
+
+                function_symbol.type_ = Some(Type::Function(
+                    parameters_list.clone(),
+                    Box::new(return_type.clone().unwrap()),
+                ));
+                parameters_list.clear();
+                return_type = Some(Type::Any);
+
+                // also update the type of the function in the tree
+                let current_scope_name = symbol_table.current_scope.clone();
+                let mut i = 1;
+                while i < tree.len() - 1 {
+                    if tree[i].text == current_scope_name && tree[i - 1].rule == Rule::FUNCTION_DECL
+                    {
+                        tree[i - 1].type_ = function_symbol.type_.clone();
+                        break;
+                    }
+                    i += 1;
+                }
+            }
             Rule::FUNCTION_CALL => {
                 last_symbol_type = SymbolType::FnCall;
             }
