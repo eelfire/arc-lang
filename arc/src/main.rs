@@ -27,7 +27,7 @@ fn main() {
 
     let program_copy = program.clone();
     let program_block = program_copy.unwrap().next().unwrap();
-    let mut tree = pair_to_nodes(program_block);
+    let tree = pair_to_nodes(program_block);
     let mut flatten_tree = tree.flatten();
     // println!("{:#?}", flatten_tree);
 
@@ -46,7 +46,7 @@ fn main() {
     type_system::check_types(&flatten_tree);
     // println!("{:#?}", flatten_tree);
 
-    let tree = unflatten(&tree, flatten_tree);
+    let tree = unflatten(&tree, &mut flatten_tree.iter());
     println!("\nType annotated tree:\n{:#?}", tree);
 
     let wat = tree_to_wat::convert_to_wat(&tree);
