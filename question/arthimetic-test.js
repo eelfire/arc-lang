@@ -25,7 +25,7 @@ const assert = require('node:assert');
     result = obj.instance.exports.div(a, b);
     console.log(`${a} / ${b} = ${result}`);
     assert.equal(result, Math.trunc(a/b));
-    result = obj.instance.exports.mod(a, b);
+    result = obj.instance.exports.modo(a, b);
     console.log(`${a} % ${b} = ${result}`);
     assert.equal(result, a % b);
 
