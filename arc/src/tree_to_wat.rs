@@ -250,6 +250,7 @@ pub fn convert_to_wat(node: &Node) -> String {
     let mut wat = String::new();
     match node.rule {
         Rule::PROGRAM => {
+            wat.push_str("(module\n");
             for child in &node.children {
                 wat.push_str(&convert_to_wat(child));
             }

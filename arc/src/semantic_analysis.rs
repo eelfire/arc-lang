@@ -31,30 +31,31 @@ pub enum SymbolType {
     TupAccess,
     ArrAccess,
     ListAccess,
+    Expression,
     Other,
 }
 
 #[derive(Debug, Clone)]
 pub struct Symbol {
-    name: String,
-    symbol_type: SymbolType,
-    location: (usize, usize),
-    type_: Option<Type>,
+    pub name: String,
+    pub symbol_type: SymbolType,
+    pub location: (usize, usize),
+    pub type_: Option<Type>,
     // used: bool,
     // other fields...
 }
 
 #[derive(Debug, Clone)]
 pub struct Scope {
-    name: String,
-    parent: String,
-    symbols: HashMap<String, Symbol>,
+    pub name: String,
+    pub parent: String,
+    pub symbols: HashMap<String, Symbol>,
 }
 
 #[derive(Debug)]
 pub struct SymbolTable {
-    scopes: HashMap<String, Scope>,
-    current_scope: String,
+    pub scopes: HashMap<String, Scope>,
+    pub current_scope: String,
 }
 
 pub trait SymbolTableTrait {
@@ -500,11 +501,12 @@ fn evaluate_expression_type(pair: Pair<Rule>, symbol_table: &SymbolTable, file_p
     type_
 }
 
-pub fn analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
-    loop_analyze(program, tree, file_path);
+pub fn analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> SymbolTable {
+    let symbol_table = loop_analyze(program, tree, file_path);
+    symbol_table
 }
 
-fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
+fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) -> SymbolTable {
     let mut symbol_table = SymbolTable {
         scopes: HashMap::new(),
         current_scope: String::from("global"),
@@ -1015,7 +1017,7 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
                         "SEM_ERR: Function `{}` already exists in scope at `{}:{}:{}`",
                         function_name, file_path, symbol.location.0, symbol.location.1
                     );
-                    return;
+                    // return;
                 }
 
                 let function_scope = Scope {
@@ -1267,4 +1269,6 @@ fn loop_analyze(program: Pairs<Rule>, tree: &mut Vec<Node>, file_path: &str) {
 
     println!("\n\n>>> Symbol Table:");
     println!("{:#?}", symbol_table);
+
+    symbol_table
 }

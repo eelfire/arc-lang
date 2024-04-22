@@ -3,5 +3,5 @@
 for file in $(ls ./testcases);
 do
     echo "Running test $file"
-    ./target/debug/arc ./testcases/$file
+    ./target/debug/arcc ./testcases/$file
 done

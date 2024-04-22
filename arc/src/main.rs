@@ -3,15 +3,16 @@ pub mod pair_to_tree;
 pub mod parser;
 pub mod semantic_analysis;
 pub mod token;
-// pub mod tree_to_wasm;
+pub mod tree_to_wasm;
 pub mod tree_to_wat;
 pub mod type_system;
 
+use std::collections::HashMap;
 use std::fs;
 
 use crate::pair_to_tree::{pair_to_nodes, unflatten};
 use crate::parser::print_nested_pairs;
-use crate::semantic_analysis::analyze;
+use crate::semantic_analysis::{analyze, SymbolTable};
 
 fn main() {
     println!("Hello from simple arc-lang compiler!");
@@ -31,11 +32,15 @@ fn main() {
     let mut flatten_tree = tree.flatten();
     // println!("{:#?}", flatten_tree);
 
+    let mut symbol_table = SymbolTable {
+        scopes: HashMap::new(),
+        current_scope: "".to_string(),
+    };
     match program {
         Ok(pairs) => {
             print_nested_pairs(&pairs, 0);
             println!("\n\n>>> Analyzing...");
-            analyze(pairs, &mut flatten_tree, file_path);
+            symbol_table = analyze(pairs, &mut flatten_tree, file_path);
         }
         Err(e) => {
             eprintln!("{}", e);
@@ -52,6 +57,18 @@ fn main() {
     let wat = tree_to_wat::convert_to_wat(&tree);
     // println!("{}", wat);
 
-    // let wasm = tree_to_wasm::convert_to_wasm(&flatten_tree);
-    // let wasm_file_path = format!("{}.wasm", file_path);
+    let wasm = tree_to_wasm::convert_to_wasm(&tree);
+    let wasm_file_path = format!(
+        "../question/wasm/{}.wasm",
+        file_path
+            .split('/')
+            .last()
+            .unwrap()
+            .split('.')
+            .next()
+            .unwrap()
+    );
+    fs::write(wasm_file_path, wasm).expect("Unable to write file");
+
+    tree_to_wasm::demo();
 }
