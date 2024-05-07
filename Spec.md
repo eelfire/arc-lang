@@ -2,11 +2,18 @@
 
 ##### Last updated: Jan 31, 2024
 
+## Table of Contents
+- [Introduction](#introduction)
+- [SDLX](#sdlx)
+- [Source Code Representation](#representation)
+- [Lexical Elements](#lexical)
+- [Identifiers](#identifiers)
+- [Keywords](#keywords)
+- [Operators](#operators)
+  
 ## Introduction
 
-This is an initial specifications sheet for Arc. It may change as the language evolves.
-
-Arc stands for **A**nother **R**ust based **C**ompiler. Arc is an _experimental_ programming language, tuned for compilation to [WASM](https://webassembly.org/). It is fast and light. It is a statically typed language. The remainder of this document will take you through the various specifications of the language.
+Arc stands for **A**nother **R**ust based **C**ompiler. Arc is an _experimental_ programming language, tuned for compilation to [WASM](https://webassembly.org/) and our very own custom ISA for the SDLX processor. It is a statically typed language. The remainder of this document will take you through the various specifications of the language.
 
 - Productions are formed by combining terms and the operators listed below, with each operator having a higher precedence than the one that follows it. All productions mentioned in this document follow a variant of EBNF (Extended Backus-Naur Form).
 
@@ -17,13 +24,77 @@ Arc stands for **A**nother **R**ust based **C**ompiler. Arc is an _experimental_
 {}  repetition (0 to n times)
 ```
 
+## SDLX
+The SDLX processor is a 32 bit 2 stage pipeligned processor. 
+
+### Func Code and ALU Control:
+  
+| Instruction | Func Code | ALU Control | Immediate Supported |
+|-------------|-----------|-------------|---------------------|
+| ADD         | `00000`   | imm         | Yes                 |
+| SUB         | `00001`   | imm         | Yes                 |
+| AND         | `00010`   | imm         | Yes                 |
+| OR          | `00011`   | -           | No                  |
+| XOR         | `00100`   | imm         | Yes                 |
+| SLL         | `00101`   | imm         | Yes                 |
+| SRL         | `00110`   | imm         | Yes                 |
+| SRA         | `00111`   | imm         | Yes                 |
+| ROL         | `01000`   | -           | No                  |
+| ROR         | `01001`   | -           | No                  |
+| SLT         | `01010`   | imm         | Yes                 |
+| SGT         | `01011`   | imm         | Yes                 |
+| SLE         | `01100`   | imm         | Yes                 |
+| SGE         | `01101`   | imm         | Yes                 |
+| UGT         | `01110`   | imm         | Yes                 |
+| ULT         | `01111`   | imm         | Yes                 |
+| ULE         | `10000`   | imm         | Yes                 |
+| UGE         | `10001`   | imm         | Yes                 |
+
+## Opcode:
+
+| Opcode | Description                            |
+|--------|----------------------------------------|
+| `000000` | R-R type triadic instructions        |
+| `000001` | ADDI (Immediate addition)            |
+| `000010` | SUBI (Immediate subtraction)         |
+| `000011` | ANDI (Immediate bitwise AND)         |
+| `000100` | ORI (Immediate bitwise OR)           |
+| `000101` | XORI (Immediate bitwise XOR)         |
+| `000110` | SLLI (Immediate left shift)          |
+| `000111` | SRLI (Immediate right shift)         |
+| `001000` | SRAI (Immediate arithmetic right shift) |
+| `001001` | SLTI (Immediate set less than)       |
+| `001010` | SGTI (Immediate set greater than)    |
+| `001011` | SLEI (Immediate set less than or equal to) |
+| `001100` | SGEI (Immediate set greater than or equal to) |
+| `001101` | UGTI (Immediate set unsigned greater than) |
+| `001110` | ULTI (Immediate set unsigned less than) |
+| `001111` | ULEI (Immediate set unsigned less than or equal to) |
+| `010000` | UGEI (Immediate set unsigned greater than or equal to) |
+| `010001` | LHI (Immediate load high)            |
+| `011000` | LB (Load byte)                       |
+| `011001` | LBU (Load byte unsigned)             |
+| `011010` | LH (Load halfword)                   |
+| `011011` | LHU (Load halfword unsigned)         |
+| `011100` | LW (Load word)                       |
+| `011101` | SB (Store byte)                      |
+| `011110` | SH (Store halfword)                  |
+| `011111` | SW (Store word)                      |
+| `100000` | BNEZ (Branch not equal to zero)     |
+| `100001` | BEQZ (Branch equal to zero)          |
+| `100010` | JR (Jump register)                   |
+| `100011` | JALR (Jump and link register)        |
+| `101000` | J (Jump)                             |
+| `101001` | JAL (Jump and link)                  |
+
+
 ## Source Code Representation
 
 The compiler only supports files that have the `.arc` extension and are encoded in `UTF-8`.
 
 #### Character Sets
 
-```rust
+```rus
 letter        = <all unicode letters> | "_" .
 decimal_digit = "0" … "9" .
 binary_digit  = "0" | "1" .
@@ -90,7 +161,7 @@ ok        // Keyword for error handling in case of success
 err       // Keyword for error handling in case of error
 ```
 
-## Operators and punctuations
+## Operators
 
 Following are the sets of supported operators (unary and binary).
 
